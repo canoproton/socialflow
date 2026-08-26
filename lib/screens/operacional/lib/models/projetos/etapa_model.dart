@@ -1,0 +1,222 @@
+/// ============================================
+/// MODELO: Etapa da Meta (Especificação Completa)
+/// ============================================
+
+class EtapaModel {
+  final String id;
+  final String metaId;
+  final int? sequencia; // Auto incremento pelo sistema
+  final String? descricao;
+  final String? rubricaId; // One2one com PlanoContas
+  final String? executorId; // One2one com Empresa
+  final String? areaId; // One2one com CentroCusto
+  final String? unidadeEtapaId; // One2one com UnidadeCC
+  final DateTime? dataInicio;
+  final DateTime? dataVencimento;
+  final double? valorUnitario;
+  final String? unidadePgtoId; // One2one com UnidadeMedida
+  final double? quantidade;
+  final double? valorEtapa; // CALCULADO: valorUnitario * quantidade
+  final String status; // PLANEJADA, ACIONADO, EXECUÇÃO, PENDENTE, CONCLUIDA
+  final String? obs;
+  final String? atualizadoPor;
+  final DateTime? atualizadoEm;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  // Relacionamentos
+  List<DocumentoModel>? documentos;
+  String? lancamentoEtapaId; // One2one com ItemLancamento
+
+  // ✅ CONSTANTES DE STATUS (conforme especificação)
+  static const String STATUS_PLANEJADA = 'PLANEJADA';
+  static const String STATUS_ACIONADO = 'ACIONADO';
+  static const String STATUS_EXECUCAO = 'EXECUÇÃO';
+  static const String STATUS_PENDENTE = 'PENDENTE';
+  static const String STATUS_CONCLUIDA = 'CONCLUIDA';
+  static const String STATUS_CANCELADA = 'CANCELADA';
+
+  static const List<String> statusOptions = [
+    STATUS_PLANEJADA,
+    STATUS_ACIONADO,
+    STATUS_EXECUCAO,
+    STATUS_PENDENTE,
+    STATUS_CONCLUIDA,
+    STATUS_CANCELADA,
+  ];
+
+  static const Map<String, String> statusLabels = {
+    STATUS_PLANEJADA: 'Planejada',
+    STATUS_ACIONADO: 'Acionado',
+    STATUS_EXECUCAO: 'Execução',
+    STATUS_PENDENTE: 'Pendente',
+    STATUS_CONCLUIDA: 'Concluída',
+    STATUS_CANCELADA: 'Cancelada',
+  };
+
+  static const Map<String, Color> statusColors = {
+    STATUS_PLANEJADA: Colors.grey,
+    STATUS_ACIONADO: Colors.orange,
+    STATUS_EXECUCAO: Colors.blue,
+    STATUS_PENDENTE: Colors.purple,
+    STATUS_CONCLUIDA: Colors.green,
+    STATUS_CANCELADA: Colors.red,
+  };
+
+  // ✅ CONSTRUTOR
+  EtapaModel({
+    required this.id,
+    required this.metaId,
+    this.sequencia,
+    this.descricao,
+    this.rubricaId,
+    this.executorId,
+    this.areaId,
+    this.unidadeEtapaId,
+    this.dataInicio,
+    this.dataVencimento,
+    this.valorUnitario,
+    this.unidadePgtoId,
+    this.quantidade,
+    this.valorEtapa,
+    required this.status,
+    this.obs,
+    this.atualizadoPor,
+    this.atualizadoEm,
+    this.createdAt,
+    this.updatedAt,
+    this.documentos,
+    this.lancamentoEtapaId,
+  });
+
+  // ✅ FACTORY FROM JSON
+  factory EtapaModel.fromJson(Map<String, dynamic> json) {
+    return EtapaModel(
+      id: json['id']?.toString() ?? '',
+      metaId: json['meta_projeto_id']?.toString() ?? '',
+      sequencia: json['sequencia'] as int?,
+      descricao: json['descricao']?.toString(),
+      rubricaId: json['rubrica']?.toString(),
+      executorId: json['executor']?.toString(),
+      areaId: json['area']?.toString(),
+      unidadeEtapaId: json['unidade_etapa']?.toString(),
+      dataInicio: json['data_inicio'] != null
+          ? DateTime.parse(json['data_inicio'].toString())
+          : null,
+      dataVencimento: json['data_vencimento'] != null
+          ? DateTime.parse(json['data_vencimento'].toString())
+          : null,
+      valorUnitario: json['valor_unitario']?.toDouble(),
+      unidadePgtoId: json['unidade_pgto']?.toString(),
+      quantidade: json['quantidade']?.toDouble(),
+      valorEtapa: json['valor_etapa']?.toDouble(),
+      status: json['status']?.toString() ?? STATUS_PLANEJADA,
+      obs: json['obs']?.toString(),
+      atualizadoPor: json['atualizado_por']?.toString(),
+      atualizadoEm: json['atualizado_em'] != null
+          ? DateTime.parse(json['atualizado_em'].toString())
+          : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'].toString())
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'].toString())
+          : null,
+      lancamentoEtapaId: json['lancamento_etapa']?.toString(),
+    );
+  }
+
+  // ✅ TO JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'meta_projeto_id': metaId,
+      'sequencia': sequencia,
+      'descricao': descricao,
+      'rubrica': rubricaId,
+      'executor': executorId,
+      'area': areaId,
+      'unidade_etapa': unidadeEtapaId,
+      'data_inicio': dataInicio?.toIso8601String(),
+      'data_vencimento': dataVencimento?.toIso8601String(),
+      'valor_unitario': valorUnitario,
+      'unidade_pgto': unidadePgtoId,
+      'quantidade': quantidade,
+      'valor_etapa': valorEtapa,
+      'status': status,
+      'obs': obs,
+      'atualizado_por': atualizadoPor,
+      'atualizado_em': atualizadoEm?.toIso8601String(),
+      'lancamento_etapa': lancamentoEtapaId,
+    };
+  }
+
+  // ✅ COPY WITH
+  EtapaModel copyWith({
+    String? id,
+    String? metaId,
+    int? sequencia,
+    String? descricao,
+    String? rubricaId,
+    String? executorId,
+    String? areaId,
+    String? unidadeEtapaId,
+    DateTime? dataInicio,
+    DateTime? dataVencimento,
+    double? valorUnitario,
+    String? unidadePgtoId,
+    double? quantidade,
+    double? valorEtapa,
+    String? status,
+    String? obs,
+    String? atualizadoPor,
+    DateTime? atualizadoEm,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<DocumentoModel>? documentos,
+    String? lancamentoEtapaId,
+  }) {
+    return EtapaModel(
+      id: id ?? this.id,
+      metaId: metaId ?? this.metaId,
+      sequencia: sequencia ?? this.sequencia,
+      descricao: descricao ?? this.descricao,
+      rubricaId: rubricaId ?? this.rubricaId,
+      executorId: executorId ?? this.executorId,
+      areaId: areaId ?? this.areaId,
+      unidadeEtapaId: unidadeEtapaId ?? this.unidadeEtapaId,
+      dataInicio: dataInicio ?? this.dataInicio,
+      dataVencimento: dataVencimento ?? this.dataVencimento,
+      valorUnitario: valorUnitario ?? this.valorUnitario,
+      unidadePgtoId: unidadePgtoId ?? this.unidadePgtoId,
+      quantidade: quantidade ?? this.quantidade,
+      valorEtapa: valorEtapa ?? this.valorEtapa,
+      status: status ?? this.status,
+      obs: obs ?? this.obs,
+      atualizadoPor: atualizadoPor ?? this.atualizadoPor,
+      atualizadoEm: atualizadoEm ?? this.atualizadoEm,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      documentos: documentos ?? this.documentos,
+      lancamentoEtapaId: lancamentoEtapaId ?? this.lancamentoEtapaId,
+    );
+  }
+
+  // ✅ GETTERS
+  String get statusLabel => statusLabels[status] ?? status;
+  Color get statusColor => statusColors[status] ?? Colors.grey;
+
+  // ✅ CÁLCULO AUTOMÁTICO: valor_etapa (Regra 4)
+  double get valorEtapaCalculado {
+    if (valorUnitario != null && quantidade != null) {
+      return valorUnitario! * quantidade!;
+    }
+    return 0;
+  }
+
+  // ✅ VALIDAÇÃO: Se valor_etapa está consistente
+  bool get isValorEtapaConsistente {
+    if (valorEtapa == null) return false;
+    return (valorEtapa! - valorEtapaCalculado).abs() < 0.01;
+  }
+}

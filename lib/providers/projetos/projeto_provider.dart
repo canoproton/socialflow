@@ -5,7 +5,6 @@
 import 'package:flutter/material.dart';
 import '../../models/projetos/projeto_model.dart';
 import '../../services/projetos/projeto_service.dart';
-import '../debug_service.dart';
 
 class ProjetoProvider extends ChangeNotifier {
   final ProjetoService _projetoService = ProjetoService();
@@ -28,13 +27,8 @@ class ProjetoProvider extends ChangeNotifier {
   // LISTAR PROJETOS
   // ============================================
 
-  /// Carrega todos os projetos da API
   Future<void> loadProjetos() async {
-    DebugService.log(
-      module: 'PROJETO_PROVIDER',
-      action: 'LOAD_PROJETOS',
-      data: 'Carregando projetos',
-    );
+    print('📋 [PROJETO_PROVIDER] LOAD_PROJETOS - Carregando projetos');
 
     _isLoading = true;
     _error = null;
@@ -42,19 +36,10 @@ class ProjetoProvider extends ChangeNotifier {
 
     try {
       _projetos = await _projetoService.list();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'LOAD_PROJETOS',
-        data: 'Carregados ${_projetos.length} projetos',
-      );
+      print('✅ [PROJETO_PROVIDER] LOAD_PROJETOS - Carregados ${_projetos.length} projetos');
     } catch (e) {
       _error = e.toString();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'LOAD_PROJETOS',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_PROVIDER] LOAD_PROJETOS - Erro: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -65,13 +50,8 @@ class ProjetoProvider extends ChangeNotifier {
   // CARREGAR PROJETO POR ID
   // ============================================
 
-  /// Carrega um projeto específico pelo ID (sem metas/etapas)
   Future<void> loadProjetoById(String id) async {
-    DebugService.log(
-      module: 'PROJETO_PROVIDER',
-      action: 'LOAD_PROJETO_BY_ID',
-      data: 'ID: $id',
-    );
+    print('📋 [PROJETO_PROVIDER] LOAD_PROJETO_BY_ID - ID: $id');
 
     _isLoading = true;
     _error = null;
@@ -79,19 +59,10 @@ class ProjetoProvider extends ChangeNotifier {
 
     try {
       _selectedProjeto = await _projetoService.getById(id);
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'LOAD_PROJETO_BY_ID',
-        data: 'Projeto: ${_selectedProjeto?.descricao}',
-      );
+      print('✅ [PROJETO_PROVIDER] LOAD_PROJETO_BY_ID - Projeto: ${_selectedProjeto?.descricao}');
     } catch (e) {
       _error = e.toString();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'LOAD_PROJETO_BY_ID',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_PROVIDER] LOAD_PROJETO_BY_ID - Erro: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -102,13 +73,8 @@ class ProjetoProvider extends ChangeNotifier {
   // CARREGAR PROJETO COMPLETO
   // ============================================
 
-  /// Carrega projeto completo com metas e etapas
   Future<void> loadProjetoCompleto(String id) async {
-    DebugService.log(
-      module: 'PROJETO_PROVIDER',
-      action: 'LOAD_PROJETO_COMPLETO',
-      data: 'ID: $id',
-    );
+    print('📋 [PROJETO_PROVIDER] LOAD_PROJETO_COMPLETO - ID: $id');
 
     _isLoading = true;
     _error = null;
@@ -116,19 +82,10 @@ class ProjetoProvider extends ChangeNotifier {
 
     try {
       _selectedProjeto = await _projetoService.getCompleto(id);
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'LOAD_PROJETO_COMPLETO',
-        data: 'Projeto: ${_selectedProjeto?.descricao}, Metas: ${_selectedProjeto?.metas.length}',
-      );
+      print('✅ [PROJETO_PROVIDER] LOAD_PROJETO_COMPLETO - Projeto: ${_selectedProjeto?.descricao}, Metas: ${_selectedProjeto?.metas.length}');
     } catch (e) {
       _error = e.toString();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'LOAD_PROJETO_COMPLETO',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_PROVIDER] LOAD_PROJETO_COMPLETO - Erro: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -139,13 +96,8 @@ class ProjetoProvider extends ChangeNotifier {
   // CRUD - PROJETO (APENAS PROJETO)
   // ============================================
 
-  /// Cria apenas o projeto (sem metas e etapas)
   Future<bool> createProjeto(Map<String, dynamic> data) async {
-    DebugService.log(
-      module: 'PROJETO_PROVIDER',
-      action: 'CREATE_PROJETO',
-      data: data,
-    );
+    print('📋 [PROJETO_PROVIDER] CREATE_PROJETO - Criando projeto');
 
     _isLoading = true;
     _error = null;
@@ -156,20 +108,11 @@ class ProjetoProvider extends ChangeNotifier {
       _projetos.insert(0, projeto);
       _selectedProjeto = projeto;
       notifyListeners();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'CREATE_PROJETO',
-        data: 'Projeto criado: ${projeto.id}',
-      );
+      print('✅ [PROJETO_PROVIDER] CREATE_PROJETO - Projeto criado: ${projeto.id}');
       return true;
     } catch (e) {
       _error = e.toString();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'CREATE_PROJETO',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_PROVIDER] CREATE_PROJETO - Erro: $e');
       notifyListeners();
       return false;
     } finally {
@@ -182,13 +125,8 @@ class ProjetoProvider extends ChangeNotifier {
   // CRUD - PROJETO COMPLETO (COM METAS E ETAPAS) ⭐ REGRA 2
   // ============================================
 
-  /// ⭐ REGRA 2: Cria projeto com metas e etapas
   Future<bool> createProjetoCompleto(Map<String, dynamic> data) async {
-    DebugService.log(
-      module: 'PROJETO_PROVIDER',
-      action: 'CREATE_PROJETO_COMPLETO',
-      data: 'Criando projeto completo',
-    );
+    print('📋 [PROJETO_PROVIDER] CREATE_PROJETO_COMPLETO - Criando projeto completo');
 
     _isLoading = true;
     _error = null;
@@ -199,20 +137,11 @@ class ProjetoProvider extends ChangeNotifier {
       _projetos.insert(0, projeto);
       _selectedProjeto = projeto;
       notifyListeners();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'CREATE_PROJETO_COMPLETO',
-        data: 'Projeto criado: ${projeto.id} com ${projeto.metas.length} metas',
-      );
+      print('✅ [PROJETO_PROVIDER] CREATE_PROJETO_COMPLETO - Projeto criado: ${projeto.id} com ${projeto.metas.length} metas');
       return true;
     } catch (e) {
       _error = e.toString();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'CREATE_PROJETO_COMPLETO',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_PROVIDER] CREATE_PROJETO_COMPLETO - Erro: $e');
       notifyListeners();
       return false;
     } finally {
@@ -221,13 +150,41 @@ class ProjetoProvider extends ChangeNotifier {
     }
   }
 
-  /// Atualiza apenas os dados do projeto
+  Future<bool> updateProjetoCompleto(String id, Map<String, dynamic> data) async {
+    print('📋 [PROJETO_PROVIDER] UPDATE_PROJETO_COMPLETO - ID: $id');
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final projeto = await _projetoService.updateCompleto(id, data);
+
+      final index = _projetos.indexWhere((p) => p.id == id);
+      if (index != -1) {
+        _projetos[index] = projeto;
+      }
+
+      if (_selectedProjeto?.id == id) {
+        _selectedProjeto = projeto;
+      }
+
+      notifyListeners();
+      print('✅ [PROJETO_PROVIDER] UPDATE_PROJETO_COMPLETO - Projeto atualizado: $id com ${projeto.metas.length} metas');
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      print('❌ [PROJETO_PROVIDER] UPDATE_PROJETO_COMPLETO - Erro: $e');
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> updateProjeto(String id, Map<String, dynamic> data) async {
-    DebugService.log(
-      module: 'PROJETO_PROVIDER',
-      action: 'UPDATE_PROJETO',
-      data: 'ID: $id',
-    );
+    print('📋 [PROJETO_PROVIDER] UPDATE_PROJETO - ID: $id');
 
     _isLoading = true;
     _error = null;
@@ -246,20 +203,11 @@ class ProjetoProvider extends ChangeNotifier {
       }
 
       notifyListeners();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'UPDATE_PROJETO',
-        data: 'Projeto atualizado: $id',
-      );
+      print('✅ [PROJETO_PROVIDER] UPDATE_PROJETO - Projeto atualizado: $id');
       return true;
     } catch (e) {
       _error = e.toString();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'UPDATE_PROJETO',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_PROVIDER] UPDATE_PROJETO - Erro: $e');
       notifyListeners();
       return false;
     } finally {
@@ -268,13 +216,8 @@ class ProjetoProvider extends ChangeNotifier {
     }
   }
 
-  /// Deleta projeto e todos os relacionamentos
   Future<bool> deleteProjeto(String id) async {
-    DebugService.log(
-      module: 'PROJETO_PROVIDER',
-      action: 'DELETE_PROJETO',
-      data: 'ID: $id',
-    );
+    print('🗑️ [PROJETO_PROVIDER] DELETE_PROJETO - ID: $id');
 
     _isLoading = true;
     _error = null;
@@ -287,20 +230,11 @@ class ProjetoProvider extends ChangeNotifier {
         _selectedProjeto = null;
       }
       notifyListeners();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'DELETE_PROJETO',
-        data: 'Projeto deletado: $id',
-      );
+      print('✅ [PROJETO_PROVIDER] DELETE_PROJETO - Projeto deletado: $id');
       return true;
     } catch (e) {
       _error = e.toString();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'DELETE_PROJETO',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_PROVIDER] DELETE_PROJETO - Erro: $e');
       notifyListeners();
       return false;
     } finally {
@@ -313,13 +247,8 @@ class ProjetoProvider extends ChangeNotifier {
   // RECALCULAR TOTAIS (Regras 4, 5, 6)
   // ============================================
 
-  /// ⭐ REGRA 6: Recalcular todos os totais
   Future<void> recalcularTotais(String projetoId) async {
-    DebugService.log(
-      module: 'PROJETO_PROVIDER',
-      action: 'RECALCULAR_TOTAIS',
-      data: 'Projeto ID: $projetoId',
-    );
+    print('📋 [PROJETO_PROVIDER] RECALCULAR_TOTAIS - Projeto ID: $projetoId');
 
     _isLoading = true;
     _error = null;
@@ -327,25 +256,16 @@ class ProjetoProvider extends ChangeNotifier {
 
     try {
       await _projetoService.recalcularTotais(projetoId);
-      
+
       if (_selectedProjeto?.id == projetoId) {
         await loadProjetoCompleto(projetoId);
       }
 
       notifyListeners();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'RECALCULAR_TOTAIS',
-        data: 'Totais recalculados para: $projetoId',
-      );
+      print('✅ [PROJETO_PROVIDER] RECALCULAR_TOTAIS - Totais recalculados para: $projetoId');
     } catch (e) {
       _error = e.toString();
-      DebugService.log(
-        module: 'PROJETO_PROVIDER',
-        action: 'RECALCULAR_TOTAIS',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_PROVIDER] RECALCULAR_TOTAIS - Erro: $e');
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -368,11 +288,7 @@ class ProjetoProvider extends ChangeNotifier {
   }
 
   void refresh() {
-    DebugService.log(
-      module: 'PROJETO_PROVIDER',
-      action: 'REFRESH',
-      data: 'Recarregando projetos',
-    );
+    print('🔄 [PROJETO_PROVIDER] REFRESH - Recarregando projetos');
     loadProjetos();
   }
 

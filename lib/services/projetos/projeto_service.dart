@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/projetos/projeto_model.dart';
 import '../../models/projetos/meta_model.dart';
 import '../../models/projetos/etapa_model.dart';
-import '../debug_service.dart';
 
 class ProjetoService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -15,14 +14,8 @@ class ProjetoService {
   // LISTAR PROJETOS
   // ============================================
 
-  /// Lista todos os projetos do banco de dados
-  /// Retorna: List<ProjetoModel>
   Future<List<ProjetoModel>> list() async {
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'LIST',
-      data: 'Listando todos os projetos',
-    );
+    print('📋 [PROJETO_SERVICE] LIST - Listando todos os projetos');
 
     try {
       final response = await _supabase
@@ -34,20 +27,10 @@ class ProjetoService {
           .map((item) => ProjetoModel.fromJson(item))
           .toList();
 
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'LIST',
-        data: 'Encontrados ${result.length} projetos',
-      );
-
+      print('✅ [PROJETO_SERVICE] LIST - Encontrados ${result.length} projetos');
       return result;
     } catch (e) {
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'LIST',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_SERVICE] LIST - Erro: $e');
       throw Exception('Erro ao listar projetos: $e');
     }
   }
@@ -56,14 +39,8 @@ class ProjetoService {
   // BUSCAR PROJETO POR ID
   // ============================================
 
-  /// Busca um projeto pelo ID
-  /// Retorna: ProjetoModel? ou null se não encontrado
   Future<ProjetoModel?> getById(String id) async {
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'GET_BY_ID',
-      data: 'ID: $id',
-    );
+    print('📋 [PROJETO_SERVICE] GET_BY_ID - Buscando projeto ID: $id');
 
     try {
       final response = await _supabase
@@ -73,23 +50,14 @@ class ProjetoService {
           .maybeSingle();
 
       if (response == null) {
-        DebugService.log(
-          module: 'PROJETO_SERVICE',
-          action: 'GET_BY_ID',
-          data: 'Projeto não encontrado',
-          isWarning: true,
-        );
+        print('⚠️ [PROJETO_SERVICE] GET_BY_ID - Projeto não encontrado');
         return null;
       }
 
+      print('✅ [PROJETO_SERVICE] GET_BY_ID - Projeto encontrado: ${response['descricao']}');
       return ProjetoModel.fromJson(response);
     } catch (e) {
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'GET_BY_ID',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_SERVICE] GET_BY_ID - Erro: $e');
       throw Exception('Erro ao buscar projeto: $e');
     }
   }
@@ -98,14 +66,8 @@ class ProjetoService {
   // BUSCAR PROJETO COMPLETO (COM METAS E ETAPAS)
   // ============================================
 
-  /// Busca um projeto com todas as metas e etapas
-  /// Retorna: ProjetoModel completo
   Future<ProjetoModel> getCompleto(String id) async {
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'GET_COMPLETO',
-      data: 'ID: $id',
-    );
+    print('📋 [PROJETO_SERVICE] GET_COMPLETO - Buscando projeto completo ID: $id');
 
     try {
       final projeto = await getById(id);
@@ -122,7 +84,7 @@ class ProjetoService {
 
       for (var item in metasResponse) {
         final meta = MetaModel.fromJson(item);
-        
+
         // Buscar etapas da meta
         final etapasResponse = await _supabase
             .from('etapas')
@@ -167,11 +129,7 @@ class ProjetoService {
 
       final saldo = (projeto.valorTotalAportado ?? 0) - totalMetas;
 
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'GET_COMPLETO',
-        data: 'Projeto: ${projeto.descricao}, Metas: ${metas.length}, Total: $totalMetas',
-      );
+      print('✅ [PROJETO_SERVICE] GET_COMPLETO - Projeto: ${projeto.descricao}, Metas: ${metas.length}, Total: $totalMetas');
 
       return ProjetoModel(
         id: projeto.id,
@@ -199,12 +157,7 @@ class ProjetoService {
         metas: metas,
       );
     } catch (e) {
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'GET_COMPLETO',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_SERVICE] GET_COMPLETO - Erro: $e');
       throw Exception('Erro ao buscar projeto completo: $e');
     }
   }
@@ -213,14 +166,8 @@ class ProjetoService {
   // CRIAR PROJETO (APENAS PROJETO, SEM METAS)
   // ============================================
 
-  /// Cria apenas o projeto (sem metas e etapas)
-  /// Usado para criação básica
   Future<ProjetoModel> create(Map<String, dynamic> data) async {
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'CREATE',
-      data: data,
-    );
+    print('📋 [PROJETO_SERVICE] CREATE - Criando projeto');
 
     try {
       final response = await _supabase
@@ -233,20 +180,10 @@ class ProjetoService {
           .select()
           .single();
 
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'CREATE',
-        data: 'Projeto criado: ${response['id']}',
-      );
-
+      print('✅ [PROJETO_SERVICE] CREATE - Projeto criado: ${response['id']}');
       return ProjetoModel.fromJson(response);
     } catch (e) {
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'CREATE',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_SERVICE] CREATE - Erro: $e');
       throw Exception('Erro ao criar projeto: $e');
     }
   }
@@ -255,26 +192,18 @@ class ProjetoService {
   // CRIAR PROJETO COMPLETO (COM METAS E ETAPAS) ⭐ REGRA 2
   // ============================================
 
-  /// Cria projeto com metas e etapas em uma única transação
-  /// ⭐ REGRA 2: Metas e Etapas são criadas junto com o projeto
-  /// ⭐ REGRA 4: Calcula valor_etapa = valor_unitario * quantidade
-  /// ⭐ REGRA 5: Calcula valor_total_metas = soma(valor_total_etapas)
   Future<ProjetoModel> createCompleto(Map<String, dynamic> data) async {
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'CREATE_COMPLETO',
-      data: 'Criando projeto com metas e etapas',
-    );
+    print('📋 [PROJETO_SERVICE] CREATE_COMPLETO - Criando projeto com metas e etapas');
 
     try {
       // 1. Extrair metas do payload
       final metasData = data.remove('metas') as List? ?? [];
-      
+
       // 2. Validar se tem metas (Regra 2)
       if (metasData.isEmpty) {
         throw Exception('Projeto deve ter pelo menos uma meta');
       }
-      
+
       // 3. Validar se todas metas têm etapas (Regra 2)
       for (var metaPayload in metasData) {
         final etapasData = metaPayload['etapas'] as List? ?? [];
@@ -282,7 +211,7 @@ class ProjetoService {
           throw Exception('Meta "${metaPayload['descricao']}" não tem etapas');
         }
       }
-      
+
       // 4. Criar projeto
       final response = await _supabase
           .from('projetos')
@@ -295,17 +224,13 @@ class ProjetoService {
           .single();
 
       final projeto = ProjetoModel.fromJson(response);
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'CREATE_COMPLETO',
-        data: 'Projeto criado: ${projeto.id}',
-      );
+      print('✅ [PROJETO_SERVICE] CREATE_COMPLETO - Projeto criado: ${projeto.id}');
 
       // 5. Criar metas e etapas
       for (var i = 0; i < metasData.length; i++) {
         final metaPayload = metasData[i];
         final etapasData = metaPayload.remove('etapas') as List? ?? [];
-        
+
         // Criar meta
         final metaResponse = await _supabase
             .from('meta_projetos')
@@ -318,18 +243,14 @@ class ProjetoService {
             })
             .select()
             .single();
-        
+
         final meta = MetaModel.fromJson(metaResponse);
-        DebugService.log(
-          module: 'PROJETO_SERVICE',
-          action: 'CREATE_COMPLETO',
-          data: 'Meta criada: ${meta.id} - ${meta.descricao}',
-        );
+        print('✅ [PROJETO_SERVICE] CREATE_COMPLETO - Meta criada: ${meta.id} - ${meta.descricao}');
 
         // Criar etapas da meta
         for (var j = 0; j < etapasData.length; j++) {
           final etapaPayload = etapasData[j];
-          
+
           // ⭐ REGRA 4: Calcular valor_etapa = valor_unitario * quantidade
           final valorUnitario = (etapaPayload['valor_unitario'] ?? 0.0).toDouble();
           final quantidade = (etapaPayload['quantidade'] ?? 0.0).toDouble();
@@ -343,12 +264,8 @@ class ProjetoService {
                 'sequencia': j + 1,
                 'valor_etapa': valorEtapa,
               });
-          
-          DebugService.log(
-            module: 'PROJETO_SERVICE',
-            action: 'CREATE_COMPLETO',
-            data: 'Etapa criada: ${etapaPayload['descricao']} - Valor: $valorEtapa',
-          );
+
+          print('✅ [PROJETO_SERVICE] CREATE_COMPLETO - Etapa criada: ${etapaPayload['descricao']} - Valor: $valorEtapa');
         }
 
         // ⭐ REGRA 4: Recalcular total da meta
@@ -360,29 +277,18 @@ class ProjetoService {
 
       // Buscar projeto completo atualizado
       return await getCompleto(projeto.id);
-      
     } catch (e) {
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'CREATE_COMPLETO',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_SERVICE] CREATE_COMPLETO - Erro: $e');
       throw Exception('Erro ao criar projeto completo: $e');
     }
   }
 
   // ============================================
-  // ATUALIZAR PROJETO
+  // ATUALIZAR PROJETO (APENAS PROJETO)
   // ============================================
 
-  /// Atualiza apenas os dados do projeto (não metas/etapas)
   Future<ProjetoModel> update(String id, Map<String, dynamic> data) async {
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'UPDATE',
-      data: 'ID: $id',
-    );
+    print('📋 [PROJETO_SERVICE] UPDATE - Atualizando projeto ID: $id');
 
     try {
       final response = await _supabase
@@ -395,21 +301,150 @@ class ProjetoService {
           .select()
           .single();
 
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'UPDATE',
-        data: 'Projeto atualizado: $id',
-      );
-
+      print('✅ [PROJETO_SERVICE] UPDATE - Projeto atualizado: $id');
       return ProjetoModel.fromJson(response);
     } catch (e) {
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'UPDATE',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_SERVICE] UPDATE - Erro: $e');
       throw Exception('Erro ao atualizar projeto: $e');
+    }
+  }
+
+  // ============================================
+  // ATUALIZAR PROJETO COMPLETO (COM METAS E ETAPAS) ⭐ REGRA 2
+  // ============================================
+
+  Future<ProjetoModel> updateCompleto(String id, Map<String, dynamic> data) async {
+    print('📋 [PROJETO_SERVICE] UPDATE_COMPLETO - Atualizando projeto completo ID: $id');
+
+    try {
+      // 1. Extrair metas do payload
+      final metasData = data.remove('metas') as List? ?? [];
+
+      // 2. Validar se tem metas (Regra 2)
+      if (metasData.isEmpty) {
+        throw Exception('Projeto deve ter pelo menos uma meta');
+      }
+
+      // 3. Validar se todas metas têm etapas (Regra 2)
+      for (var metaPayload in metasData) {
+        final etapasData = metaPayload['etapas'] as List? ?? [];
+        if (etapasData.isEmpty) {
+          throw Exception('Meta "${metaPayload['descricao']}" não tem etapas');
+        }
+      }
+
+      // 4. Atualizar dados do projeto
+      await _supabase
+          .from('projetos')
+          .update({
+            ...data,
+            'atualizado_em': DateTime.now().toIso8601String(),
+          })
+          .eq('id', id);
+
+      print('✅ [PROJETO_SERVICE] UPDATE_COMPLETO - Projeto atualizado: $id');
+
+      // 5. Buscar metas existentes
+      final metasExistentes = await _supabase
+          .from('meta_projetos')
+          .select('id')
+          .eq('projeto_id', id);
+
+      final idsExistentes = (metasExistentes as List)
+          .map((m) => m['id'].toString())
+          .toList();
+
+      final idsNovos = <String>[];
+
+      // 6. Processar metas
+      for (var i = 0; i < metasData.length; i++) {
+        final metaPayload = metasData[i];
+        final metaId = metaPayload['id'] as String?;
+        final etapasData = metaPayload.remove('etapas') as List? ?? [];
+
+        if (metaId != null && idsExistentes.contains(metaId)) {
+          // 6a. Atualizar meta existente
+          await _supabase
+              .from('meta_projetos')
+              .update({
+                ...metaPayload,
+                'atualizado_em': DateTime.now().toIso8601String(),
+              })
+              .eq('id', metaId);
+
+          idsNovos.add(metaId);
+          print('✅ [PROJETO_SERVICE] UPDATE_COMPLETO - Meta atualizada: $metaId');
+
+          // Atualizar etapas da meta
+          await _processarEtapas(metaId, etapasData);
+        } else {
+          // 6b. Criar nova meta
+          final metaResponse = await _supabase
+              .from('meta_projetos')
+              .insert({
+                ...metaPayload,
+                'projeto_id': id,
+                'sequencia': i + 1,
+                'valor_total_etapas': 0,
+                'saldo_meta': 0,
+              })
+              .select()
+              .single();
+
+          final novaMeta = MetaModel.fromJson(metaResponse);
+          idsNovos.add(novaMeta.id);
+          print('✅ [PROJETO_SERVICE] UPDATE_COMPLETO - Nova meta criada: ${novaMeta.id}');
+
+          // Criar etapas da nova meta
+          for (var j = 0; j < etapasData.length; j++) {
+            final etapaPayload = etapasData[j];
+
+            // ⭐ REGRA 4: Calcular valor_etapa
+            final valorUnitario = (etapaPayload['valor_unitario'] ?? 0.0).toDouble();
+            final quantidade = (etapaPayload['quantidade'] ?? 0.0).toDouble();
+            final valorEtapa = valorUnitario * quantidade;
+
+            await _supabase
+                .from('etapas')
+                .insert({
+                  ...etapaPayload,
+                  'meta_projeto_id': novaMeta.id,
+                  'sequencia': j + 1,
+                  'valor_etapa': valorEtapa,
+                });
+          }
+
+          // Recalcular total da nova meta
+          await _recalcularTotalMeta(novaMeta.id);
+        }
+      }
+
+      // 7. Remover metas que não estão mais no payload
+      for (var idExistente in idsExistentes) {
+        if (!idsNovos.contains(idExistente)) {
+          print('🗑️ [PROJETO_SERVICE] UPDATE_COMPLETO - Removendo meta: $idExistente');
+          // Deletar etapas da meta
+          await _supabase
+              .from('etapas')
+              .delete()
+              .eq('meta_projeto_id', idExistente);
+
+          // Deletar meta
+          await _supabase
+              .from('meta_projetos')
+              .delete()
+              .eq('id', idExistente);
+        }
+      }
+
+      // 8. Recalcular totais (Regras 4, 5)
+      await _recalcularTotaisProjeto(id);
+
+      // 9. Buscar projeto completo atualizado
+      return await getCompleto(id);
+    } catch (e) {
+      print('❌ [PROJETO_SERVICE] UPDATE_COMPLETO - Erro: $e');
+      throw Exception('Erro ao atualizar projeto completo: $e');
     }
   }
 
@@ -417,13 +452,8 @@ class ProjetoService {
   // DELETAR PROJETO (CASCATA)
   // ============================================
 
-  /// Deleta projeto e todos os relacionamentos (metas e etapas)
   Future<void> delete(String id) async {
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'DELETE',
-      data: 'ID: $id',
-    );
+    print('🗑️ [PROJETO_SERVICE] DELETE - Deletando projeto ID: $id');
 
     try {
       // Buscar metas
@@ -452,20 +482,83 @@ class ProjetoService {
           .delete()
           .eq('id', id);
 
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'DELETE',
-        data: 'Projeto deletado: $id',
-      );
+      print('✅ [PROJETO_SERVICE] DELETE - Projeto deletado: $id');
     } catch (e) {
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'DELETE',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_SERVICE] DELETE - Erro: $e');
       throw Exception('Erro ao deletar projeto: $e');
     }
+  }
+
+  // ============================================
+  // PROCESSAR ETAPAS (AUXILIAR)
+  // ============================================
+
+  Future<void> _processarEtapas(String metaId, List<dynamic> etapasData) async {
+    // Buscar etapas existentes
+    final etapasExistentes = await _supabase
+        .from('etapas')
+        .select('id')
+        .eq('meta_projeto_id', metaId);
+
+    final idsExistentes = (etapasExistentes as List)
+        .map((e) => e['id'].toString())
+        .toList();
+
+    final idsNovos = <String>[];
+
+    for (var i = 0; i < etapasData.length; i++) {
+      final etapaPayload = etapasData[i];
+      final etapaId = etapaPayload['id'] as String?;
+
+      // ⭐ REGRA 4: Calcular valor_etapa
+      final valorUnitario = (etapaPayload['valor_unitario'] ?? 0.0).toDouble();
+      final quantidade = (etapaPayload['quantidade'] ?? 0.0).toDouble();
+      final valorEtapa = valorUnitario * quantidade;
+
+      if (etapaId != null && idsExistentes.contains(etapaId)) {
+        // Atualizar etapa existente
+        await _supabase
+            .from('etapas')
+            .update({
+              ...etapaPayload,
+              'valor_etapa': valorEtapa,
+              'atualizado_em': DateTime.now().toIso8601String(),
+            })
+            .eq('id', etapaId);
+
+        idsNovos.add(etapaId);
+        print('✅ [PROJETO_SERVICE] PROCESSAR_ETAPAS - Etapa atualizada: $etapaId');
+      } else {
+        // Criar nova etapa
+        final etapaResponse = await _supabase
+            .from('etapas')
+            .insert({
+              ...etapaPayload,
+              'meta_projeto_id': metaId,
+              'sequencia': i + 1,
+              'valor_etapa': valorEtapa,
+            })
+            .select()
+            .single();
+
+        idsNovos.add(etapaResponse['id'].toString());
+        print('✅ [PROJETO_SERVICE] PROCESSAR_ETAPAS - Nova etapa criada: ${etapaResponse['id']}');
+      }
+    }
+
+    // Remover etapas deletadas
+    for (var idExistente in idsExistentes) {
+      if (!idsNovos.contains(idExistente)) {
+        print('🗑️ [PROJETO_SERVICE] PROCESSAR_ETAPAS - Removendo etapa: $idExistente');
+        await _supabase
+            .from('etapas')
+            .delete()
+            .eq('id', idExistente);
+      }
+    }
+
+    // Recalcular total da meta
+    await _recalcularTotalMeta(metaId);
   }
 
   // ============================================
@@ -473,7 +566,6 @@ class ProjetoService {
   // ============================================
 
   /// ⭐ REGRA 4: Recalcular total de etapas da meta
-  /// valor_total_etapas = soma(valor_etapa) de todas etapas
   Future<void> _recalcularTotalMeta(String metaId) async {
     final etapasResponse = await _supabase
         .from('etapas')
@@ -481,7 +573,7 @@ class ProjetoService {
         .eq('meta_projeto_id', metaId);
 
     final etapas = etapasResponse as List;
-    
+
     double totalEtapas = 0;
     for (var etapa in etapas) {
       totalEtapas += (etapa['valor_etapa'] ?? 0.0).toDouble();
@@ -505,15 +597,10 @@ class ProjetoService {
         })
         .eq('id', metaId);
 
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'RECALCULAR_META',
-      data: 'Meta $metaId - Total Etapas: $totalEtapas, Saldo: $saldoMeta',
-    );
+    print('📊 [PROJETO_SERVICE] RECALCULAR_META - Meta $metaId - Total Etapas: $totalEtapas, Saldo: $saldoMeta');
   }
 
   /// ⭐ REGRA 5: Recalcular totais do projeto
-  /// valor_total_metas = soma(valor_total_etapas) de todas metas
   Future<void> _recalcularTotaisProjeto(String projetoId) async {
     final metasResponse = await _supabase
         .from('meta_projetos')
@@ -521,7 +608,7 @@ class ProjetoService {
         .eq('projeto_id', projetoId);
 
     final metas = metasResponse as List;
-    
+
     double totalMetas = 0;
     for (var meta in metas) {
       totalMetas += (meta['valor_total_etapas'] ?? 0.0).toDouble();
@@ -541,20 +628,12 @@ class ProjetoService {
         })
         .eq('id', projetoId);
 
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'RECALCULAR_PROJETO',
-      data: 'Projeto $projetoId - Total Metas: $totalMetas, Saldo: $saldo',
-    );
+    print('📊 [PROJETO_SERVICE] RECALCULAR_PROJETO - Projeto $projetoId - Total Metas: $totalMetas, Saldo: $saldo');
   }
 
   /// ⭐ REGRA 6: Recalcular todos os totais (chamada pública)
   Future<void> recalcularTotais(String projetoId) async {
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'RECALCULAR_TOTAIS',
-      data: 'Projeto ID: $projetoId',
-    );
+    print('📋 [PROJETO_SERVICE] RECALCULAR_TOTAIS - Projeto ID: $projetoId');
     await _recalcularTotaisProjeto(projetoId);
   }
 
@@ -562,54 +641,28 @@ class ProjetoService {
   // VALIDAÇÃO (Regra 8)
   // ============================================
 
-  /// ⭐ REGRA 8: Verificar se projeto pode ser aprovado
-  /// Condições: tem metas e todas metas têm etapas
   Future<bool> podeAprovar(String projetoId) async {
-    DebugService.log(
-      module: 'PROJETO_SERVICE',
-      action: 'PODE_APROVAR',
-      data: 'Projeto ID: $projetoId',
-    );
+    print('📋 [PROJETO_SERVICE] PODE_APROVAR - Verificando projeto ID: $projetoId');
 
     try {
       final projeto = await getCompleto(projetoId);
 
       if (projeto.metas.isEmpty) {
-        DebugService.log(
-          module: 'PROJETO_SERVICE',
-          action: 'PODE_APROVAR',
-          data: 'Projeto sem metas',
-          isWarning: true,
-        );
+        print('⚠️ [PROJETO_SERVICE] PODE_APROVAR - Projeto sem metas');
         throw Exception('Projeto não pode ser aprovado sem metas');
       }
 
       for (var meta in projeto.metas) {
         if (meta.etapas.isEmpty) {
-          DebugService.log(
-            module: 'PROJETO_SERVICE',
-            action: 'PODE_APROVAR',
-            data: 'Meta sem etapas: ${meta.descricao}',
-            isWarning: true,
-          );
+          print('⚠️ [PROJETO_SERVICE] PODE_APROVAR - Meta sem etapas: ${meta.descricao}');
           throw Exception('Meta "${meta.descricao}" não tem etapas');
         }
       }
 
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'PODE_APROVAR',
-        data: 'Projeto pode ser aprovado',
-      );
-
+      print('✅ [PROJETO_SERVICE] PODE_APROVAR - Projeto pode ser aprovado');
       return true;
     } catch (e) {
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'PODE_APROVAR',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_SERVICE] PODE_APROVAR - Erro: $e');
       rethrow;
     }
   }

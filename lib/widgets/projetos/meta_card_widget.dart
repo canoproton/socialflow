@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import '../../models/projetos/meta_model.dart';
 import '../../models/projetos/etapa_model.dart';
 import '../../theme/app_theme.dart';
-import '../../services/debug_service.dart';
 
 class MetaCardWidget extends StatefulWidget {
   final MetaModel meta;
@@ -87,22 +86,16 @@ class _MetaCardWidgetState extends State<MetaCardWidget> {
   }
 
   void _onUpdate(String field, dynamic value) {
-    DebugService.log(
-      module: 'META_CARD',
-      action: 'UPDATE',
-      data: 'Meta ${widget.index + 1} - $field: $value',
-    );
+    print('📋 [META_CARD] UPDATE - Meta ${widget.index + 1} - $field: $value');
     widget.onUpdate(widget.index, {field: value});
   }
 
+  // ⭐ CORRIGIDO: Adicionar etapa com ID temporário
   void _adicionarEtapa() {
-    DebugService.log(
-      module: 'META_CARD',
-      action: 'ADD_ETAPA',
-      data: 'Meta ${widget.index + 1}',
-    );
+    print('📋 [META_CARD] ADD_ETAPA - Meta ${widget.index + 1}');
+    
     final novaEtapa = EtapaModel(
-      id: '',
+      id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
       metaId: widget.meta.id,
       descricao: '',
       status: EtapaModel.STATUS_PLANEJADA,
@@ -110,11 +103,16 @@ class _MetaCardWidgetState extends State<MetaCardWidget> {
       quantidade: 0,
       valorEtapa: 0,
     );
+    
+    print('✅ [META_CARD] ADD_ETAPA - Etapa criada: ${novaEtapa.id}');
     widget.onAddEtapa(widget.index, novaEtapa);
   }
 
   @override
   Widget build(BuildContext context) {
+    // ⭐ ATUALIZAR A LISTA DE ETAPAS QUANDO O WIDGET RECONSTRUIR
+    _etapas = List.from(widget.meta.etapas);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: Colors.grey[50],
@@ -148,11 +146,7 @@ class _MetaCardWidgetState extends State<MetaCardWidget> {
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () {
-                      DebugService.log(
-                        module: 'META_CARD',
-                        action: 'REMOVE',
-                        data: 'Meta ${widget.index + 1}',
-                      );
+                      print('🗑️ [META_CARD] REMOVE - Meta ${widget.index + 1}');
                       widget.onRemove(widget.index);
                     },
                     tooltip: 'Remover Meta',
@@ -243,7 +237,7 @@ class _MetaCardWidgetState extends State<MetaCardWidget> {
                     child: TextFormField(
                       controller: _vlMetaAprovController,
                       decoration: const InputDecoration(
-                        labelText: 'Valor Aprovado (R$)',
+                        labelText: 'Valor Aprovado (R\$)',
                         border: OutlineInputBorder(),
                         prefixText: 'R\$ ',
                       ),
@@ -345,6 +339,7 @@ class _MetaCardWidgetState extends State<MetaCardWidget> {
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                   onPressed: () {
+                    print('🗑️ [META_CARD] REMOVE_ETAPA - Meta ${widget.index + 1} - Etapa $etapaIndex');
                     widget.onRemoveEtapa(widget.index, etapaIndex);
                   },
                   tooltip: 'Remover Etapa',
@@ -362,7 +357,7 @@ class _MetaCardWidgetState extends State<MetaCardWidget> {
                   child: TextFormField(
                     initialValue: etapa.valorUnitario?.toString() ?? '',
                     decoration: const InputDecoration(
-                      labelText: 'Valor Unitário (R$)',
+                      labelText: 'Valor Unitário (R\$)',
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     ),

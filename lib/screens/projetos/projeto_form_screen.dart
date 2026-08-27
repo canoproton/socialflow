@@ -10,7 +10,6 @@ import '../../models/projetos/projeto_model.dart';
 import '../../models/projetos/meta_model.dart';
 import '../../models/projetos/etapa_model.dart';
 import '../../theme/app_theme.dart';
-import '../../services/debug_service.dart';
 import '../../widgets/projetos/meta_card_widget.dart';
 
 class ProjetoFormScreen extends StatefulWidget {
@@ -39,13 +38,8 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
   @override
   void initState() {
     super.initState();
-    DebugService.module('PROJETO FORM SCREEN');
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'INIT',
-      data: 'projetoId: ${widget.projetoId} | isEditing: ${widget.projetoId != null}',
-    );
-    
+    print('📋 [PROJETO_FORM] INIT - projetoId: ${widget.projetoId} | isEditing: ${widget.projetoId != null}');
+
     if (widget.projetoId != null) {
       _loadProjeto();
     }
@@ -53,11 +47,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
 
   @override
   void dispose() {
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'DISPOSE',
-      data: 'Dispondo formulário',
-    );
+    print('🗑️ [PROJETO_FORM] DISPOSE - Dispondo formulário');
     _descricaoController.dispose();
     _processoController.dispose();
     _dataEntregaController.dispose();
@@ -70,23 +60,15 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
   // ============================================
 
   Future<void> _loadProjeto() async {
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'LOAD',
-      data: 'Carregando projeto ID: ${widget.projetoId}',
-    );
-    
+    print('📋 [PROJETO_FORM] LOAD - Carregando projeto ID: ${widget.projetoId}');
+
     try {
       final provider = context.read<ProjetoProvider>();
       await provider.loadProjetoCompleto(widget.projetoId!);
-      
+
       final projeto = provider.selectedProjeto;
       if (projeto != null && mounted) {
-        DebugService.log(
-          module: 'PROJETO',
-          action: 'LOADED',
-          data: 'Projeto: ${projeto.descricao}, Metas: ${projeto.metas.length}',
-        );
+        print('✅ [PROJETO_FORM] LOADED - Projeto: ${projeto.descricao}, Metas: ${projeto.metas.length}');
         setState(() {
           _descricaoController.text = projeto.descricao ?? '';
           _processoController.text = projeto.processo ?? '';
@@ -97,12 +79,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
         });
       }
     } catch (e) {
-      DebugService.log(
-        module: 'PROJETO',
-        action: 'LOAD',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_FORM] LOAD - Erro: $e');
     }
   }
 
@@ -110,13 +87,8 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
   // GERENCIAR METAS (Regra 2)
   // ============================================
 
-  /// ⭐ Adiciona uma nova meta vazia
   void _adicionarMeta() {
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'ADD_META',
-      data: 'Adicionando nova meta',
-    );
+    print('📋 [PROJETO_FORM] ADD_META - Adicionando nova meta');
     setState(() {
       _metas.add(MetaModel(
         id: '',
@@ -127,25 +99,15 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     });
   }
 
-  /// ⭐ Remove uma meta
   void _removerMeta(int index) {
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'REMOVE_META',
-      data: 'Removendo meta $index',
-    );
+    print('🗑️ [PROJETO_FORM] REMOVE_META - Removendo meta $index');
     setState(() {
       _metas.removeAt(index);
     });
   }
 
-  /// ⭐ Atualiza dados de uma meta
   void _atualizarMeta(int index, Map<String, dynamic> data) {
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'UPDATE_META',
-      data: 'Meta $index - $data',
-    );
+    print('📋 [PROJETO_FORM] UPDATE_META - Meta $index - $data');
     setState(() {
       final meta = _metas[index];
       _metas[index] = MetaModel(
@@ -178,37 +140,30 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
   // GERENCIAR ETAPAS (Regra 2)
   // ============================================
 
-  /// ⭐ Adiciona uma nova etapa a uma meta
   void _adicionarEtapa(int metaIndex, EtapaModel etapa) {
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'ADD_ETAPA',
-      data: 'Meta $metaIndex - Etapa: ${etapa.descricao}',
-    );
+    print('📋 [PROJETO_FORM] ADD_ETAPA - Meta $metaIndex - Etapa: ${etapa.descricao}');
+    
     setState(() {
       final meta = _metas[metaIndex];
       final novasEtapas = List<EtapaModel>.from(meta.etapas)..add(etapa);
       _metas[metaIndex] = meta.copyWith(etapas: novasEtapas);
     });
+    
+    print('✅ [PROJETO_FORM] ADD_ETAPA - Meta $metaIndex agora tem ${_metas[metaIndex].etapas.length} etapas');
   }
 
-  /// ⭐ Atualiza dados de uma etapa (Regra 4 - recalcula valor_etapa)
   void _atualizarEtapa(int metaIndex, int etapaIndex, Map<String, dynamic> data) {
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'UPDATE_ETAPA',
-      data: 'Meta $metaIndex - Etapa $etapaIndex - $data',
-    );
+    print('📋 [PROJETO_FORM] UPDATE_ETAPA - Meta $metaIndex - Etapa $etapaIndex - $data');
     setState(() {
       final meta = _metas[metaIndex];
       final etapas = List<EtapaModel>.from(meta.etapas);
       final etapa = etapas[etapaIndex];
-      
+
       // ⭐ REGRA 4: Calcular valor_etapa = valor_unitario * quantidade
       final valorUnitario = data['valorUnitario'] ?? etapa.valorUnitario ?? 0;
       final quantidade = data['quantidade'] ?? etapa.quantidade ?? 0;
       final valorEtapa = (valorUnitario as double) * (quantidade as double);
-      
+
       etapas[etapaIndex] = etapa.copyWith(
         descricao: data['descricao'] ?? etapa.descricao,
         valorUnitario: data['valorUnitario'] ?? etapa.valorUnitario,
@@ -221,13 +176,8 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     });
   }
 
-  /// ⭐ Remove uma etapa
   void _removerEtapa(int metaIndex, int etapaIndex) {
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'REMOVE_ETAPA',
-      data: 'Meta $metaIndex - Etapa $etapaIndex',
-    );
+    print('🗑️ [PROJETO_FORM] REMOVE_ETAPA - Meta $metaIndex - Etapa $etapaIndex');
     setState(() {
       final meta = _metas[metaIndex];
       final etapas = List<EtapaModel>.from(meta.etapas)..removeAt(etapaIndex);
@@ -239,22 +189,11 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
   // SALVAR PROJETO (Regras 2, 4, 5, 6)
   // ============================================
 
-  /// ⭐ Salva o projeto completo com metas e etapas
   Future<void> _salvar() async {
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'SALVAR',
-      data: 'Iniciando salvamento | isEditing: ${widget.projetoId != null} | Metas: ${_metas.length}',
-    );
-    
-    // Validar formulário
+    print('📋 [PROJETO_FORM] SALVAR - Iniciando salvamento | isEditing: ${widget.projetoId != null} | Metas: ${_metas.length}');
+
     if (!_formKey.currentState!.validate()) {
-      DebugService.log(
-        module: 'PROJETO',
-        action: 'SALVAR',
-        data: 'Formulário inválido',
-        isWarning: true,
-      );
+      print('⚠️ [PROJETO_FORM] SALVAR - Formulário inválido');
       return;
     }
 
@@ -289,7 +228,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
         'descricao': _descricaoController.text,
         'processo': _processoController.text.isNotEmpty ? _processoController.text : null,
         'status_projeto': _status,
-        'data_entrega': _dataEntregaController.text.isNotEmpty 
+        'data_entrega': _dataEntregaController.text.isNotEmpty
             ? DateTime.parse(_dataEntregaController.text).toIso8601String()
             : null,
         'valor_estimado': double.tryParse(_valorEstimadoController.text),
@@ -313,18 +252,14 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
         }).toList(),
       };
 
-      DebugService.log(
-        module: 'PROJETO',
-        action: 'SALVAR',
-        data: 'Dados: ${data.keys}',
-      );
+      print('📋 [PROJETO_FORM] SALVAR - Dados: ${data.keys}');
 
       final provider = context.read<ProjetoProvider>();
       bool success;
 
       if (widget.projetoId != null) {
-        // ⭐ EDIÇÃO: Atualizar projeto (TODO: implementar updateCompleto)
-        success = await provider.updateProjeto(widget.projetoId!, data);
+        // ⭐ EDIÇÃO: Usar updateCompleto
+        success = await provider.updateProjetoCompleto(widget.projetoId!, data);
       } else {
         // ⭐ CRIAÇÃO: Usar createCompleto
         success = await provider.createProjetoCompleto(data);
@@ -340,12 +275,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
         context.go('/projetos');
       }
     } catch (e) {
-      DebugService.log(
-        module: 'PROJETO',
-        action: 'SALVAR',
-        error: e.toString(),
-        isError: true,
-      );
+      print('❌ [PROJETO_FORM] SALVAR - Erro: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -365,11 +295,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    DebugService.log(
-      module: 'PROJETO',
-      action: 'BUILD',
-      data: 'isEditing: ${widget.projetoId != null} | Metas: ${_metas.length}',
-    );
+    print('📋 [PROJETO_FORM] BUILD - isEditing: ${widget.projetoId != null} | Metas: ${_metas.length}');
 
     return Scaffold(
       appBar: AppBar(
@@ -379,11 +305,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            DebugService.log(
-              module: 'PROJETO',
-              action: 'VOLTAR',
-              data: 'Voltando para lista de projetos',
-            );
+            print('⬅️ [PROJETO_FORM] VOLTAR - Voltando para lista de projetos');
             context.go('/projetos');
           },
           tooltip: 'Voltar',
@@ -517,7 +439,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
             TextFormField(
               controller: _valorEstimadoController,
               decoration: const InputDecoration(
-                labelText: 'Valor Estimado (R$)',
+                labelText: 'Valor Estimado (R\$)', // ⭐ ESCAPADO COM \
                 border: OutlineInputBorder(),
                 prefixText: 'R\$ ',
               ),
@@ -639,11 +561,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     );
     if (picked != null) {
       controller.text = picked.toIso8601String().split('T').first;
-      DebugService.log(
-        module: 'PROJETO',
-        action: 'DATA_ENTREGA',
-        data: 'Data selecionada: ${controller.text}',
-      );
+      print('📅 [PROJETO_FORM] DATA_ENTREGA - Data selecionada: ${controller.text}');
     }
   }
 }

@@ -1,15 +1,12 @@
 /// ============================================
 /// SERVIÇO: DEBUG
 /// ============================================
-/// Imprime logs detalhados com timestamp e cores
-/// ============================================
 
 import 'package:flutter/foundation.dart';
 
 class DebugService {
   static const String _prefix = '🔍 SOCIALFLOW';
 
-  // Cores para console (funciona no terminal)
   static const String _reset = '\x1B[0m';
   static const String _red = '\x1B[31m';
   static const String _green = '\x1B[32m';
@@ -51,7 +48,7 @@ class DebugService {
       if (data != null && !isWarning) {
         print('${_cyan}DATA: $data$_reset');
       }
-      print('${_cyan}---${_reset}');
+      print('${_cyan}---$_reset');
     }
   }
 

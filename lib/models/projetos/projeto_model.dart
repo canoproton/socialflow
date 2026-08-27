@@ -2,7 +2,6 @@
 /// MODELO: Projeto (Especificação Completa)
 /// ============================================
 
-// ⭐ IMPORTANTE: Importar o MetaModel
 import 'meta_model.dart';
 
 class ProjetoModel {
@@ -11,6 +10,10 @@ class ProjetoModel {
   final String? processo;
   final String? proponenteId;
   final String? contaId;
+  final List<String>? docsAnexo;
+  final List<String>? recursos;
+  final List<String>? contraPartida;
+  final DateTime? dataEntrega;
   final double? valorEstimado;
   final DateTime? dataAprovacao;
   final double? valorAprovado;
@@ -22,13 +25,11 @@ class ProjetoModel {
   final String? obs;
   final String? atualizadoPor;
   final DateTime? atualizadoEm;
-  final DateTime? dataEntrega;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-
-  // ⭐ Relacionamento com Metas
   List<MetaModel> metas;
 
+  // ⭐ STATUS DO PROJETO (Regra 1)
   static const String STATUS_ORCAMENTO = 'ORÇAMENTO';
   static const String STATUS_EMITIDO = 'EMITIDO';
   static const String STATUS_APROVADO = 'APROVADO';
@@ -60,6 +61,10 @@ class ProjetoModel {
     this.processo,
     this.proponenteId,
     this.contaId,
+    this.docsAnexo,
+    this.recursos,
+    this.contraPartida,
+    this.dataEntrega,
     this.valorEstimado,
     this.dataAprovacao,
     this.valorAprovado,
@@ -71,7 +76,6 @@ class ProjetoModel {
     this.obs,
     this.atualizadoPor,
     this.atualizadoEm,
-    this.dataEntrega,
     this.createdAt,
     this.updatedAt,
     this.metas = const [],
@@ -84,6 +88,18 @@ class ProjetoModel {
       processo: json['processo']?.toString(),
       proponenteId: json['proponente']?.toString(),
       contaId: json['conta']?.toString(),
+      docsAnexo: json['docs_anexo'] != null
+          ? List<String>.from(json['docs_anexo'])
+          : null,
+      recursos: json['recursos'] != null
+          ? List<String>.from(json['recursos'])
+          : null,
+      contraPartida: json['contra_partida'] != null
+          ? List<String>.from(json['contra_partida'])
+          : null,
+      dataEntrega: json['data_entrega'] != null
+          ? DateTime.parse(json['data_entrega'].toString())
+          : null,
       valorEstimado: json['valor_estimado']?.toDouble(),
       dataAprovacao: json['data_aprovacao'] != null
           ? DateTime.parse(json['data_aprovacao'].toString())
@@ -98,9 +114,6 @@ class ProjetoModel {
       atualizadoPor: json['atualizado_por']?.toString(),
       atualizadoEm: json['atualizado_em'] != null
           ? DateTime.parse(json['atualizado_em'].toString())
-          : null,
-      dataEntrega: json['data_entrega'] != null
-          ? DateTime.parse(json['data_entrega'].toString())
           : null,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'].toString())
@@ -118,6 +131,10 @@ class ProjetoModel {
       'processo': processo,
       'proponente': proponenteId,
       'conta': contaId,
+      'docs_anexo': docsAnexo,
+      'recursos': recursos,
+      'contra_partida': contraPartida,
+      'data_entrega': dataEntrega?.toIso8601String(),
       'valor_estimado': valorEstimado,
       'data_aprovacao': dataAprovacao?.toIso8601String(),
       'valor_aprovado': valorAprovado,
@@ -129,14 +146,71 @@ class ProjetoModel {
       'obs': obs,
       'atualizado_por': atualizadoPor,
       'atualizado_em': atualizadoEm?.toIso8601String(),
-      'data_entrega': dataEntrega?.toIso8601String(),
     };
+  }
+
+  ProjetoModel copyWith({
+    String? id,
+    String? descricao,
+    String? processo,
+    String? proponenteId,
+    String? contaId,
+    List<String>? docsAnexo,
+    List<String>? recursos,
+    List<String>? contraPartida,
+    DateTime? dataEntrega,
+    double? valorEstimado,
+    DateTime? dataAprovacao,
+    double? valorAprovado,
+    double? valorTotalAportado,
+    double? valorTotalMetas,
+    double? saldoProjeto,
+    String? gerenteProjetoId,
+    String? statusProjeto,
+    String? obs,
+    String? atualizadoPor,
+    DateTime? atualizadoEm,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<MetaModel>? metas,
+  }) {
+    return ProjetoModel(
+      id: id ?? this.id,
+      descricao: descricao ?? this.descricao,
+      processo: processo ?? this.processo,
+      proponenteId: proponenteId ?? this.proponenteId,
+      contaId: contaId ?? this.contaId,
+      docsAnexo: docsAnexo ?? this.docsAnexo,
+      recursos: recursos ?? this.recursos,
+      contraPartida: contraPartida ?? this.contraPartida,
+      dataEntrega: dataEntrega ?? this.dataEntrega,
+      valorEstimado: valorEstimado ?? this.valorEstimado,
+      dataAprovacao: dataAprovacao ?? this.dataAprovacao,
+      valorAprovado: valorAprovado ?? this.valorAprovado,
+      valorTotalAportado: valorTotalAportado ?? this.valorTotalAportado,
+      valorTotalMetas: valorTotalMetas ?? this.valorTotalMetas,
+      saldoProjeto: saldoProjeto ?? this.saldoProjeto,
+      gerenteProjetoId: gerenteProjetoId ?? this.gerenteProjetoId,
+      statusProjeto: statusProjeto ?? this.statusProjeto,
+      obs: obs ?? this.obs,
+      atualizadoPor: atualizadoPor ?? this.atualizadoPor,
+      atualizadoEm: atualizadoEm ?? this.atualizadoEm,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      metas: metas ?? this.metas,
+    );
   }
 
   String get statusLabel => statusLabels[statusProjeto] ?? statusProjeto;
 
+  // ⭐ VALIDAÇÃO DO PROCESSO (Regra 1)
   static bool validarProcesso(String processo) {
     final regex = RegExp(r'^\d{5}-\d{8}/\d{4}-\d{2}$');
     return regex.hasMatch(processo);
+  }
+
+  // ⭐ CÁLCULO DO SALDO DO PROJETO
+  double get saldoCalculado {
+    return (valorTotalAportado ?? 0) - (valorTotalMetas ?? 0);
   }
 }

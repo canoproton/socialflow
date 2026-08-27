@@ -6,25 +6,46 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/projetos/projeto_model.dart';
 import '../../models/projetos/meta_model.dart';
 import '../../models/projetos/etapa_model.dart';
+import '../debug_service.dart';
 
 class ProjetoService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   // ============================================
-  // LISTAR PROJETOS (SIMPLES)
+  // LISTAR PROJETOS (VERSÃO SIMPLIFICADA - SEM FILTROS)
   // ============================================
 
   Future<List<ProjetoModel>> list() async {
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'LIST',
+      data: 'Listando todos os projetos',
+    );
+
     try {
       final response = await _supabase
           .from('projetos')
           .select()
           .order('created_at', ascending: false);
 
-      return (response as List)
+      final result = (response as List)
           .map((item) => ProjetoModel.fromJson(item))
           .toList();
+
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'LIST',
+        data: 'Encontrados ${result.length} projetos',
+      );
+
+      return result;
     } catch (e) {
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'LIST',
+        error: e.toString(),
+        isError: true,
+      );
       throw Exception('Erro ao listar projetos: $e');
     }
   }
@@ -34,6 +55,12 @@ class ProjetoService {
   // ============================================
 
   Future<ProjetoModel?> getById(String id) async {
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'GET_BY_ID',
+      data: 'ID: $id',
+    );
+
     try {
       final response = await _supabase
           .from('projetos')
@@ -41,9 +68,24 @@ class ProjetoService {
           .eq('id', id)
           .maybeSingle();
 
-      if (response == null) return null;
+      if (response == null) {
+        DebugService.log(
+          module: 'PROJETO_SERVICE',
+          action: 'GET_BY_ID',
+          data: 'Projeto não encontrado',
+          isWarning: true,
+        );
+        return null;
+      }
+
       return ProjetoModel.fromJson(response);
     } catch (e) {
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'GET_BY_ID',
+        error: e.toString(),
+        isError: true,
+      );
       throw Exception('Erro ao buscar projeto: $e');
     }
   }
@@ -53,6 +95,12 @@ class ProjetoService {
   // ============================================
 
   Future<ProjetoModel> getCompleto(String id) async {
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'GET_COMPLETO',
+      data: 'ID: $id',
+    );
+
     try {
       final projeto = await getById(id);
       if (projeto == null) throw Exception('Projeto não encontrado');
@@ -95,6 +143,7 @@ class ProjetoService {
           valorTotalEtapas: meta.valorTotalEtapas,
           saldoMeta: meta.saldoMeta,
           supervisorId: meta.supervisorId,
+          docsMetas: meta.docsMetas,
           obs: meta.obs,
           atualizadoPor: meta.atualizadoPor,
           atualizadoEm: meta.atualizadoEm,
@@ -112,12 +161,22 @@ class ProjetoService {
 
       final saldo = (projeto.valorTotalAportado ?? 0) - totalMetas;
 
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'GET_COMPLETO',
+        data: 'Projeto: ${projeto.descricao}, Metas: ${metas.length}, Total: $totalMetas',
+      );
+
       return ProjetoModel(
         id: projeto.id,
         descricao: projeto.descricao,
         processo: projeto.processo,
         proponenteId: projeto.proponenteId,
         contaId: projeto.contaId,
+        docsAnexo: projeto.docsAnexo,
+        recursos: projeto.recursos,
+        contraPartida: projeto.contraPartida,
+        dataEntrega: projeto.dataEntrega,
         valorEstimado: projeto.valorEstimado,
         dataAprovacao: projeto.dataAprovacao,
         valorAprovado: projeto.valorAprovado,
@@ -129,12 +188,17 @@ class ProjetoService {
         obs: projeto.obs,
         atualizadoPor: projeto.atualizadoPor,
         atualizadoEm: projeto.atualizadoEm,
-        dataEntrega: projeto.dataEntrega,
         createdAt: projeto.createdAt,
         updatedAt: projeto.updatedAt,
         metas: metas,
       );
     } catch (e) {
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'GET_COMPLETO',
+        error: e.toString(),
+        isError: true,
+      );
       throw Exception('Erro ao buscar projeto completo: $e');
     }
   }
@@ -144,6 +208,12 @@ class ProjetoService {
   // ============================================
 
   Future<ProjetoModel> create(Map<String, dynamic> data) async {
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'CREATE',
+      data: data,
+    );
+
     try {
       final response = await _supabase
           .from('projetos')
@@ -155,8 +225,20 @@ class ProjetoService {
           .select()
           .single();
 
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'CREATE',
+        data: 'Projeto criado: ${response['id']}',
+      );
+
       return ProjetoModel.fromJson(response);
     } catch (e) {
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'CREATE',
+        error: e.toString(),
+        isError: true,
+      );
       throw Exception('Erro ao criar projeto: $e');
     }
   }
@@ -166,6 +248,12 @@ class ProjetoService {
   // ============================================
 
   Future<ProjetoModel> update(String id, Map<String, dynamic> data) async {
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'UPDATE',
+      data: 'ID: $id',
+    );
+
     try {
       final response = await _supabase
           .from('projetos')
@@ -177,17 +265,35 @@ class ProjetoService {
           .select()
           .single();
 
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'UPDATE',
+        data: 'Projeto atualizado: $id',
+      );
+
       return ProjetoModel.fromJson(response);
     } catch (e) {
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'UPDATE',
+        error: e.toString(),
+        isError: true,
+      );
       throw Exception('Erro ao atualizar projeto: $e');
     }
   }
 
   // ============================================
-  // DELETAR PROJETO (CASCATA)
+  // DELETAR PROJETO
   // ============================================
 
   Future<void> delete(String id) async {
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'DELETE',
+      data: 'ID: $id',
+    );
+
     try {
       // Buscar metas
       final metasResponse = await _supabase
@@ -214,7 +320,19 @@ class ProjetoService {
           .from('projetos')
           .delete()
           .eq('id', id);
+
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'DELETE',
+        data: 'Projeto deletado: $id',
+      );
     } catch (e) {
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'DELETE',
+        error: e.toString(),
+        isError: true,
+      );
       throw Exception('Erro ao deletar projeto: $e');
     }
   }
@@ -224,6 +342,12 @@ class ProjetoService {
   // ============================================
 
   Future<void> recalcularTotais(String projetoId) async {
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'RECALCULAR_TOTAIS',
+      data: 'Projeto ID: $projetoId',
+    );
+
     try {
       final metasResponse = await _supabase
           .from('meta_projetos')
@@ -248,31 +372,73 @@ class ProjetoService {
             'atualizado_em': DateTime.now().toIso8601String(),
           })
           .eq('id', projetoId);
+
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'RECALCULAR_TOTAIS',
+        data: 'Total Metas: $totalMetas, Saldo: $saldo',
+      );
     } catch (e) {
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'RECALCULAR_TOTAIS',
+        error: e.toString(),
+        isError: true,
+      );
       throw Exception('Erro ao recalcular totais: $e');
     }
   }
 
   // ============================================
-  // VALIDAR SE PROJETO PODE SER APROVADO
+  // VALIDAR SE PROJETO PODE SER APROVADO (Regra 8)
   // ============================================
 
   Future<bool> podeAprovar(String projetoId) async {
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'PODE_APROVAR',
+      data: 'Projeto ID: $projetoId',
+    );
+
     try {
       final projeto = await getCompleto(projetoId);
 
       if (projeto.metas.isEmpty) {
+        DebugService.log(
+          module: 'PROJETO_SERVICE',
+          action: 'PODE_APROVAR',
+          data: 'Projeto sem metas',
+          isWarning: true,
+        );
         throw Exception('Projeto não pode ser aprovado sem metas');
       }
 
       for (var meta in projeto.metas) {
         if (meta.etapas.isEmpty) {
+          DebugService.log(
+            module: 'PROJETO_SERVICE',
+            action: 'PODE_APROVAR',
+            data: 'Meta sem etapas: ${meta.descricao}',
+            isWarning: true,
+          );
           throw Exception('Meta "${meta.descricao}" não tem etapas');
         }
       }
 
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'PODE_APROVAR',
+        data: 'Projeto pode ser aprovado',
+      );
+
       return true;
     } catch (e) {
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'PODE_APROVAR',
+        error: e.toString(),
+        isError: true,
+      );
       rethrow;
     }
   }

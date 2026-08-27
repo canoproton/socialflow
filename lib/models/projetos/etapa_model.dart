@@ -1,10 +1,11 @@
 /// ============================================
-/// MODELO: Etapa da Meta
+/// MODELO: Etapa da Meta (Especificação Completa)
 /// ============================================
 
 class EtapaModel {
   final String id;
   final String metaId;
+  final String? lancamentoEtapa;
   final int? sequencia;
   final String? descricao;
   final String? rubricaId;
@@ -18,12 +19,14 @@ class EtapaModel {
   final double? quantidade;
   final double? valorEtapa;
   final String status;
+  final List<String>? docsEtapa;
   final String? obs;
   final String? atualizadoPor;
   final DateTime? atualizadoEm;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  // ⭐ STATUS DA ETAPA (Regra 1)
   static const String STATUS_PLANEJADA = 'PLANEJADA';
   static const String STATUS_ACIONADO = 'ACIONADO';
   static const String STATUS_EXECUCAO = 'EXECUÇÃO';
@@ -52,6 +55,7 @@ class EtapaModel {
   EtapaModel({
     required this.id,
     required this.metaId,
+    this.lancamentoEtapa,
     this.sequencia,
     this.descricao,
     this.rubricaId,
@@ -65,6 +69,7 @@ class EtapaModel {
     this.quantidade,
     this.valorEtapa,
     required this.status,
+    this.docsEtapa,
     this.obs,
     this.atualizadoPor,
     this.atualizadoEm,
@@ -76,6 +81,7 @@ class EtapaModel {
     return EtapaModel(
       id: json['id']?.toString() ?? '',
       metaId: json['meta_projeto_id']?.toString() ?? '',
+      lancamentoEtapa: json['lancamento_etapa']?.toString(),
       sequencia: json['sequencia'] as int?,
       descricao: json['descricao']?.toString(),
       rubricaId: json['rubrica']?.toString(),
@@ -93,6 +99,9 @@ class EtapaModel {
       quantidade: json['quantidade']?.toDouble(),
       valorEtapa: json['valor_etapa']?.toDouble(),
       status: json['status']?.toString() ?? STATUS_PLANEJADA,
+      docsEtapa: json['docs_etapa'] != null
+          ? List<String>.from(json['docs_etapa'])
+          : null,
       obs: json['obs']?.toString(),
       atualizadoPor: json['atualizado_por']?.toString(),
       atualizadoEm: json['atualizado_em'] != null
@@ -111,6 +120,7 @@ class EtapaModel {
     return {
       'id': id,
       'meta_projeto_id': metaId,
+      'lancamento_etapa': lancamentoEtapa,
       'sequencia': sequencia,
       'descricao': descricao,
       'rubrica': rubricaId,
@@ -124,11 +134,76 @@ class EtapaModel {
       'quantidade': quantidade,
       'valor_etapa': valorEtapa,
       'status': status,
+      'docs_etapa': docsEtapa,
       'obs': obs,
       'atualizado_por': atualizadoPor,
       'atualizado_em': atualizadoEm?.toIso8601String(),
     };
   }
 
+  EtapaModel copyWith({
+    String? id,
+    String? metaId,
+    String? lancamentoEtapa,
+    int? sequencia,
+    String? descricao,
+    String? rubricaId,
+    String? executorId,
+    String? areaId,
+    String? unidadeEtapaId,
+    DateTime? dataInicio,
+    DateTime? dataVencimento,
+    double? valorUnitario,
+    String? unidadePgtoId,
+    double? quantidade,
+    double? valorEtapa,
+    String? status,
+    List<String>? docsEtapa,
+    String? obs,
+    String? atualizadoPor,
+    DateTime? atualizadoEm,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return EtapaModel(
+      id: id ?? this.id,
+      metaId: metaId ?? this.metaId,
+      lancamentoEtapa: lancamentoEtapa ?? this.lancamentoEtapa,
+      sequencia: sequencia ?? this.sequencia,
+      descricao: descricao ?? this.descricao,
+      rubricaId: rubricaId ?? this.rubricaId,
+      executorId: executorId ?? this.executorId,
+      areaId: areaId ?? this.areaId,
+      unidadeEtapaId: unidadeEtapaId ?? this.unidadeEtapaId,
+      dataInicio: dataInicio ?? this.dataInicio,
+      dataVencimento: dataVencimento ?? this.dataVencimento,
+      valorUnitario: valorUnitario ?? this.valorUnitario,
+      unidadePgtoId: unidadePgtoId ?? this.unidadePgtoId,
+      quantidade: quantidade ?? this.quantidade,
+      valorEtapa: valorEtapa ?? this.valorEtapa,
+      status: status ?? this.status,
+      docsEtapa: docsEtapa ?? this.docsEtapa,
+      obs: obs ?? this.obs,
+      atualizadoPor: atualizadoPor ?? this.atualizadoPor,
+      atualizadoEm: atualizadoEm ?? this.atualizadoEm,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
   String get statusLabel => statusLabels[status] ?? status;
+
+  // ⭐ CÁLCULO DO VALOR DA ETAPA (Regra 4)
+  double get valorEtapaCalculado {
+    if (valorUnitario != null && quantidade != null) {
+      return valorUnitario! * quantidade!;
+    }
+    return 0;
+  }
+
+  // ⭐ VERIFICA SE O VALOR ESTÁ CONSISTENTE
+  bool get isValorEtapaConsistente {
+    if (valorEtapa == null) return false;
+    return (valorEtapa! - valorEtapaCalculado).abs() < 0.01;
+  }
 }

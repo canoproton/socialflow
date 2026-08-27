@@ -5,11 +5,10 @@
 import 'package:flutter/material.dart';
 import '../../models/projetos/projeto_model.dart';
 import '../../services/projetos/projeto_service.dart';
-import '../../services/projetos/disparo_service.dart';
+import '../../services/debug_service.dart';
 
 class ProjetoProvider extends ChangeNotifier {
   final ProjetoService _projetoService = ProjetoService();
-  final DisparoService _disparoService = DisparoService();
 
   List<ProjetoModel> _projetos = [];
   ProjetoModel? _selectedProjeto;
@@ -17,7 +16,6 @@ class ProjetoProvider extends ChangeNotifier {
   String? _error;
   Map<String, dynamic> _filters = {};
 
-  // Getters
   List<ProjetoModel> get projetos => _projetos;
   ProjetoModel? get selectedProjeto => _selectedProjeto;
   bool get isLoading => _isLoading;
@@ -25,18 +23,35 @@ class ProjetoProvider extends ChangeNotifier {
   Map<String, dynamic> get filters => _filters;
 
   // ============================================
-  // LISTAR PROJETOS (SIMPLIFICADO)
+  // LISTAR PROJETOS (COM FILTROS)
   // ============================================
 
   Future<void> loadProjetos() async {
+    DebugService.log(
+      module: 'PROJETO_PROVIDER',
+      action: 'LOAD_PROJETOS',
+      data: 'Carregando projetos',
+    );
+
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       _projetos = await _projetoService.list();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'LOAD_PROJETOS',
+        data: 'Carregados ${_projetos.length} projetos',
+      );
     } catch (e) {
       _error = e.toString();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'LOAD_PROJETOS',
+        error: e.toString(),
+        isError: true,
+      );
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -44,18 +59,35 @@ class ProjetoProvider extends ChangeNotifier {
   }
 
   // ============================================
-  // CARREGAR PROJETO POR ID (Regra 3)
+  // CARREGAR PROJETO POR ID
   // ============================================
 
   Future<void> loadProjetoById(String id) async {
+    DebugService.log(
+      module: 'PROJETO_PROVIDER',
+      action: 'LOAD_PROJETO_BY_ID',
+      data: 'ID: $id',
+    );
+
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       _selectedProjeto = await _projetoService.getById(id);
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'LOAD_PROJETO_BY_ID',
+        data: 'Projeto: ${_selectedProjeto?.descricao}',
+      );
     } catch (e) {
       _error = e.toString();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'LOAD_PROJETO_BY_ID',
+        error: e.toString(),
+        isError: true,
+      );
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -63,18 +95,35 @@ class ProjetoProvider extends ChangeNotifier {
   }
 
   // ============================================
-  // CARREGAR PROJETO COMPLETO (COM METAS E ETAPAS)
+  // CARREGAR PROJETO COMPLETO
   // ============================================
 
   Future<void> loadProjetoCompleto(String id) async {
+    DebugService.log(
+      module: 'PROJETO_PROVIDER',
+      action: 'LOAD_PROJETO_COMPLETO',
+      data: 'ID: $id',
+    );
+
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       _selectedProjeto = await _projetoService.getCompleto(id);
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'LOAD_PROJETO_COMPLETO',
+        data: 'Projeto: ${_selectedProjeto?.descricao}, Metas: ${_selectedProjeto?.metas.length}',
+      );
     } catch (e) {
       _error = e.toString();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'LOAD_PROJETO_COMPLETO',
+        error: e.toString(),
+        isError: true,
+      );
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -86,6 +135,12 @@ class ProjetoProvider extends ChangeNotifier {
   // ============================================
 
   Future<bool> createProjeto(Map<String, dynamic> data) async {
+    DebugService.log(
+      module: 'PROJETO_PROVIDER',
+      action: 'CREATE_PROJETO',
+      data: data,
+    );
+
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -95,9 +150,20 @@ class ProjetoProvider extends ChangeNotifier {
       _projetos.insert(0, projeto);
       _selectedProjeto = projeto;
       notifyListeners();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'CREATE_PROJETO',
+        data: 'Projeto criado: ${projeto.id}',
+      );
       return true;
     } catch (e) {
       _error = e.toString();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'CREATE_PROJETO',
+        error: e.toString(),
+        isError: true,
+      );
       notifyListeners();
       return false;
     } finally {
@@ -107,6 +173,12 @@ class ProjetoProvider extends ChangeNotifier {
   }
 
   Future<bool> updateProjeto(String id, Map<String, dynamic> data) async {
+    DebugService.log(
+      module: 'PROJETO_PROVIDER',
+      action: 'UPDATE_PROJETO',
+      data: 'ID: $id',
+    );
+
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -124,9 +196,20 @@ class ProjetoProvider extends ChangeNotifier {
       }
 
       notifyListeners();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'UPDATE_PROJETO',
+        data: 'Projeto atualizado: $id',
+      );
       return true;
     } catch (e) {
       _error = e.toString();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'UPDATE_PROJETO',
+        error: e.toString(),
+        isError: true,
+      );
       notifyListeners();
       return false;
     } finally {
@@ -136,6 +219,12 @@ class ProjetoProvider extends ChangeNotifier {
   }
 
   Future<bool> deleteProjeto(String id) async {
+    DebugService.log(
+      module: 'PROJETO_PROVIDER',
+      action: 'DELETE_PROJETO',
+      data: 'ID: $id',
+    );
+
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -147,107 +236,22 @@ class ProjetoProvider extends ChangeNotifier {
         _selectedProjeto = null;
       }
       notifyListeners();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'DELETE_PROJETO',
+        data: 'Projeto deletado: $id',
+      );
       return true;
     } catch (e) {
       _error = e.toString();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'DELETE_PROJETO',
+        error: e.toString(),
+        isError: true,
+      );
       notifyListeners();
       return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // ============================================
-  // APROVAR PROJETO (Regra 8)
-  // ============================================
-
-  Future<bool> aprovarProjeto(String projetoId) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      // Buscar projeto completo
-      final projeto = await _projetoService.getCompleto(projetoId);
-
-      // Verificar se tem metas e etapas
-      if (projeto.metas.isEmpty) {
-        throw Exception('Projeto não pode ser aprovado sem metas');
-      }
-
-      for (var meta in projeto.metas) {
-        if (meta.etapas.isEmpty) {
-          throw Exception('Meta "${meta.descricao}" não tem etapas');
-        }
-      }
-
-      // Disparar todas etapas (Regra 8)
-      await _disparoService.dispararTodasEtapas(projeto);
-
-      // Recarregar projeto
-      await loadProjetoCompleto(projetoId);
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // ============================================
-  // CONCLUIR ETAPA (Regra 8)
-  // ============================================
-
-  Future<bool> concluirEtapa(String etapaId) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      await _disparoService.concluirItemLancamento(etapaId);
-
-      if (_selectedProjeto != null) {
-        await loadProjetoCompleto(_selectedProjeto!.id);
-      }
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // ============================================
-  // RECALCULAR TOTAIS (Regras 4, 5, 6)
-  // ============================================
-
-  Future<void> recalcularTotais(String projetoId) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      await _projetoService.recalcularTotais(projetoId);
-      
-      if (_selectedProjeto?.id == projetoId) {
-        await loadProjetoCompleto(projetoId);
-      }
-
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -269,6 +273,11 @@ class ProjetoProvider extends ChangeNotifier {
   }
 
   void refresh() {
+    DebugService.log(
+      module: 'PROJETO_PROVIDER',
+      action: 'REFRESH',
+      data: 'Recarregando projetos',
+    );
     loadProjetos();
   }
 

@@ -58,6 +58,10 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
       data: 'empresaId: ${widget.empresaId} | isEditing: ${widget.empresaId != null}',
     );
     _isEditing = widget.empresaId != null;
+    
+    // ⭐ LOG PARA VERIFICAR
+    print('🔍 _isEditing: $_isEditing, empresaId: ${widget.empresaId}');
+    
     if (_isEditing) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadEmpresaData();
@@ -120,11 +124,32 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
     }
   }
 
+  Future<bool> _cnpjJaExiste(String cnpj) async {
+    // Buscar todas as empresas
+    final provider = context.read<EmpresaProvider>();
+    await provider.loadEmpresas();
+    
+    // ⭐ PEGAR O ID DA EMPRESA QUE ESTÁ SENDO EDITADA
+    final String? idAtual = widget.empresaId;
+    
+    for (var empresa in provider.empresas) {
+      // ⭐ IGNORAR A PRÓPRIA EMPRESA (se for edição)
+      if (idAtual != null && empresa.id == idAtual) {
+        continue; // Pula a própria empresa
+      }
+      
+      if (empresa.cnpj == cnpj) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<void> _salvar() async {
     DebugService.log(
       module: 'EMPRESA',
       action: 'SALVAR',
-      data: 'Iniciando salvamento | isEditing: $_isEditing',
+      data: 'Iniciando salvamento | isEditing: $_isEditing | empresaId: ${widget.empresaId}',
     );
     if (!_formKey.currentState!.validate()) return;
 
@@ -146,7 +171,38 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
 
       final provider = context.read<EmpresaProvider>();
 
+      // ⭐ VALIDAR CNPJ DUPLICADO (APENAS SE NÃO FOR EDIÇÃO)
+      if (cnpjParaEnviar != null && !_isEditing) {
+        DebugService.log(
+          module: 'EMPRESA',
+          action: 'VALIDAR_CNPJ',
+          data: 'Validando CNPJ para nova empresa: $cnpjParaEnviar',
+        );
+        final existe = await _cnpjJaExiste(cnpjParaEnviar);
+        if (existe) {
+          DebugService.log(
+            module: 'EMPRESA',
+            action: 'CNPJ_DUPLICADO',
+            data: 'CNPJ já existe: $cnpjParaEnviar',
+            isWarning: true,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('CNPJ já cadastrado! Verifique o número informado.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
+
       if (_isEditing) {
+        DebugService.log(
+          module: 'EMPRESA',
+          action: 'ATUALIZAR',
+          data: 'Atualizando empresa ID: ${widget.empresaId}',
+        );
         final success = await provider.updateEmpresa(widget.empresaId!, data);
         if (success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -158,6 +214,11 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
           await _loadEmpresaData();
         }
       } else {
+        DebugService.log(
+          module: 'EMPRESA',
+          action: 'CRIAR',
+          data: 'Criando nova empresa',
+        );
         final novaEmpresa = await provider.createEmpresa(data);
         
         if (novaEmpresa != null && mounted) {
@@ -183,21 +244,18 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
       }
     } catch (e) {
       if (mounted) {
-        if (e.toString().contains('duplicate key value')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('CNPJ já cadastrado! Verifique o número informado.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        DebugService.log(
+          module: 'EMPRESA',
+          action: 'ERRO',
+          data: e.toString(),
+          isError: true,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

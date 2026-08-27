@@ -160,7 +160,7 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context),  // ⭐ VOLTA PARA QUEM CHAMOU
           tooltip: 'Voltar',
         ),
         actions: [

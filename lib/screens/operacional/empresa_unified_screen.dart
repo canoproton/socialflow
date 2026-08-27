@@ -43,6 +43,9 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
   List<EnderecoModel> _enderecos = [];
   List<MidiasModel> _midias = [];
 
+  // ⭐ ARMAZENA O ID DA EMPRESA APÓS SALVAR
+  String? _empresaIdSalva;
+
   @override
   void initState() {
     super.initState();
@@ -87,6 +90,7 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
           _emails = List.from(empresa.emails);
           _enderecos = List.from(empresa.enderecos);
           _midias = List.from(empresa.midias);
+          _empresaIdSalva = widget.empresaId;
         });
       }
     } catch (e) {
@@ -111,9 +115,9 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
     try {
       final data = {
         'nome': _nomeController.text,
-        'razaoSocial': _razaoController.text,
+        'razao_social': _razaoController.text,
         'qualif': _qualif,
-        'tipoContr': _tipoContr,
+        'tipo_contr': _tipoContr,
         'cnpj': _cnpjController.text,
         'ie': _ieController.text,
         'obs': _obsController.text,
@@ -137,7 +141,9 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
         final novaEmpresa = await provider.createEmpresa(data);
         
         if (novaEmpresa != null && mounted) {
-          // ⭐ RECARREGAR A LISTA DE EMPRESAS
+          _empresaIdSalva = novaEmpresa.id;
+          
+          // ⭐ RECARREGA A LISTA DE EMPRESAS
           await provider.loadEmpresas();
           
           ScaffoldMessenger.of(context).showSnackBar(
@@ -147,10 +153,9 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
             ),
           );
           
-          // ⭐ VOLTA PARA LISTA DE EMPRESAS (onde a empresa vai aparecer)
-          context.go('/operacional/empresas');
+          // ⭐ VAI PARA EDIÇÃO DA EMPRESA CRIADA (para vincular contatos)
+          context.go('/operacional/empresa/${novaEmpresa.id}');
         } else {
-          // ⭐ SE FALHOU, MOSTRA ERRO
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Erro ao criar empresa: ${provider.error}'),
@@ -175,8 +180,8 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ⭐ DETERMINA SE PODE VINCULAR CONTATOS (SE É EDIÇÃO OU JÁ FOI SALVO)
-    final podeVincular = _isEditing || widget.empresaId != null;
+    // ⭐ USA O ID SALVO OU O ID DO WIDGET
+    final idParaVincular = _empresaIdSalva ?? widget.empresaId;
 
     return Scaffold(
       appBar: AppBar(
@@ -339,51 +344,28 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
                     const SizedBox(height: 16),
 
                     // ============================================
-                    // ⭐ CONTATOS VINCULADOS (SÓ APARECE SE FOR EDIÇÃO)
+                    // ⭐ CONTATOS VINCULADOS - SEMPRE VISÍVEL
+                    // ⭐ SE NÃO TIVER ID, MOSTRA MENSAGEM "SALVE PARA VINCULAR"
                     // ============================================
-                    if (podeVincular)
-                      ContatosVinculadosWidget(
-                        contatos: _contatosVinculados,
-                        empresaId: widget.empresaId,
-                        onContatoVinculado: (contato) {
-                          setState(() {
-                            _contatosVinculados.add(contato);
-                          });
-                        },
-                        onContatoDesvinculado: (contatoId) {
-                          setState(() {
-                            _contatosVinculados
-                                .removeWhere((c) => c.id == contatoId);
-                          });
-                        },
-                        onContatoCriado: (contato) {
-                          setState(() {
-                            _contatosVinculados.add(contato);
-                          });
-                        },
-                      ),
-                    
-                    if (!podeVincular)
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.info_outline, color: Colors.orange),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Salve a empresa para poder vincular contatos',
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    ContatosVinculadosWidget(
+                      contatos: _contatosVinculados,
+                      empresaId: idParaVincular,
+                      onContatoVinculado: (contato) {
+                        setState(() {
+                          _contatosVinculados.add(contato);
+                        });
+                      },
+                      onContatoDesvinculado: (contatoId) {
+                        setState(() {
+                          _contatosVinculados.removeWhere((c) => c.id == contatoId);
+                        });
+                      },
+                      onContatoCriado: (contato) {
+                        setState(() {
+                          _contatosVinculados.add(contato);
+                        });
+                      },
+                    ),
                     const SizedBox(height: 16),
 
                     // ============================================

@@ -14,13 +14,11 @@ class ContatoService {
 
   Future<List<ContatoModel>> list() async {
     try {
-      // ⭐ Buscar apenas contatos (excluir empresas)
       final response = await _supabase
           .from('contato')
           .select()
-          .neq('tipo_vinculo', 'EMPRESA')  // ⭐ FILTRO: exclui registros do tipo EMPRESA
           .order('nome', ascending: true);
-      
+
       return (response as List)
           .map((item) => ContatoModel.fromJson(item))
           .toList();
@@ -36,7 +34,7 @@ class ContatoService {
           .select()
           .eq('id', id)
           .maybeSingle();
-      
+
       if (response == null) return null;
       return ContatoModel.fromJson(response);
     } catch (e) {
@@ -51,7 +49,7 @@ class ContatoService {
           .insert(data)
           .select()
           .single();
-      
+
       return ContatoModel.fromJson(response);
     } catch (e) {
       throw Exception('Erro ao criar contato: $e');
@@ -66,7 +64,7 @@ class ContatoService {
           .eq('id', id)
           .select()
           .single();
-      
+
       return ContatoModel.fromJson(response);
     } catch (e) {
       throw Exception('Erro ao atualizar contato: $e');
@@ -94,7 +92,7 @@ class ContatoService {
           .from('telefone')
           .select()
           .eq('contato_id', contatoId);
-      
+
       return (response as List)
           .map((item) => TelefoneModel.fromJson(item))
           .toList();
@@ -109,7 +107,7 @@ class ContatoService {
           .from('email')
           .select()
           .eq('contato_id', contatoId);
-      
+
       return (response as List)
           .map((item) => EmailModel.fromJson(item))
           .toList();
@@ -124,7 +122,7 @@ class ContatoService {
           .from('endereco')
           .select()
           .eq('contato_id', contatoId);
-      
+
       return (response as List)
           .map((item) => EnderecoModel.fromJson(item))
           .toList();
@@ -139,7 +137,7 @@ class ContatoService {
           .from('midias')
           .select()
           .eq('contato_id', contatoId);
-      
+
       return (response as List)
           .map((item) => MidiasModel.fromJson(item))
           .toList();

@@ -1,5 +1,5 @@
 /// ============================================
-/// MODELO: Contato (COMPLETO)
+/// MODELO: Contato
 /// ============================================
 
 import 'telefone_model.dart';
@@ -12,16 +12,15 @@ class ContatoModel {
   final String nome;
   final String tipoVinculo;
   final String? funcaoId;
-  final String? empresaId;
   final String? cpf;
   final String? rg;
   final String? genero;
   final String? obs;
   final String? atualizadoPor;
   final DateTime? createdAt;
-  final DateTime? atualizadoEm;
-  
-  // Relacionamentos
+  final DateTime? updatedAt;
+
+  // ⭐ RELACIONAMENTOS
   List<TelefoneModel> telefones;
   List<EmailModel> emails;
   List<EnderecoModel> enderecos;
@@ -48,14 +47,13 @@ class ContatoModel {
     required this.nome,
     required this.tipoVinculo,
     this.funcaoId,
-    this.empresaId,
     this.cpf,
     this.rg,
     this.genero,
     this.obs,
     this.atualizadoPor,
     this.createdAt,
-    this.atualizadoEm,
+    this.updatedAt,
     this.telefones = const [],
     this.emails = const [],
     this.enderecos = const [],
@@ -68,17 +66,16 @@ class ContatoModel {
       nome: json['nome']?.toString() ?? '',
       tipoVinculo: json['tipo_vinculo']?.toString() ?? 'EXTERNO',
       funcaoId: json['funcao_id']?.toString(),
-      empresaId: json['empresa_id']?.toString(),
       cpf: json['cpf']?.toString(),
       rg: json['rg']?.toString(),
       genero: json['genero']?.toString(),
       obs: json['obs']?.toString(),
       atualizadoPor: json['atualizado_por']?.toString(),
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at'].toString()) 
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'].toString())
           : null,
-      atualizadoEm: json['atualizado_em'] != null 
-          ? DateTime.parse(json['atualizado_em'].toString()) 
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'].toString())
           : null,
     );
   }
@@ -89,14 +86,13 @@ class ContatoModel {
       'nome': nome,
       'tipo_vinculo': tipoVinculo,
       'funcao_id': funcaoId,
-      'empresa_id': empresaId,
       'cpf': cpf,
       'rg': rg,
       'genero': genero,
       'obs': obs,
       'atualizado_por': atualizadoPor,
       'created_at': createdAt?.toIso8601String(),
-      'atualizado_em': atualizadoEm?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
     };
   }
 
@@ -105,14 +101,13 @@ class ContatoModel {
     String? nome,
     String? tipoVinculo,
     String? funcaoId,
-    String? empresaId,
     String? cpf,
     String? rg,
     String? genero,
     String? obs,
     String? atualizadoPor,
     DateTime? createdAt,
-    DateTime? atualizadoEm,
+    DateTime? updatedAt,
     List<TelefoneModel>? telefones,
     List<EmailModel>? emails,
     List<EnderecoModel>? enderecos,
@@ -123,14 +118,13 @@ class ContatoModel {
       nome: nome ?? this.nome,
       tipoVinculo: tipoVinculo ?? this.tipoVinculo,
       funcaoId: funcaoId ?? this.funcaoId,
-      empresaId: empresaId ?? this.empresaId,
       cpf: cpf ?? this.cpf,
       rg: rg ?? this.rg,
       genero: genero ?? this.genero,
       obs: obs ?? this.obs,
       atualizadoPor: atualizadoPor ?? this.atualizadoPor,
       createdAt: createdAt ?? this.createdAt,
-      atualizadoEm: atualizadoEm ?? this.atualizadoEm,
+      updatedAt: updatedAt ?? this.updatedAt,
       telefones: telefones ?? this.telefones,
       emails: emails ?? this.emails,
       enderecos: enderecos ?? this.enderecos,
@@ -138,24 +132,7 @@ class ContatoModel {
     );
   }
 
-  String get tipoVinculoLabel {
-    return tipoVinculoLabels[tipoVinculo] ?? tipoVinculo;
-  }
-
-  String get generoLabel {
-    return generoLabels[genero ?? ''] ?? genero ?? '';
-  }
-
-  String get cpfFormatado {
-    if (cpf == null || cpf!.length != 11) return cpf ?? '';
-    return '${cpf!.substring(0,3)}.${cpf!.substring(3,6)}.${cpf!.substring(6,9)}-${cpf!.substring(9,11)}';
-  }
-
-  String get initials {
-    final names = nome.split(' ');
-    if (names.length >= 2) {
-      return '${names[0][0]}${names[1][0]}'.toUpperCase();
-    }
-    return nome.substring(0, 2).toUpperCase();
-  }
+  String get tipoVinculoLabel => tipoVinculoLabels[tipoVinculo] ?? tipoVinculo;
+  String get generoLabel => generoLabels[genero ?? ''] ?? genero ?? '';
+  String get initials => nome.isNotEmpty ? nome[0].toUpperCase() : 'C';
 }

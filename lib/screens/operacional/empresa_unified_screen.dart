@@ -3,7 +3,6 @@
 /// ============================================
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/operacional/empresa_provider.dart';
@@ -15,7 +14,6 @@ import '../../widgets/operacional/endereco_list_widget.dart';
 import '../../widgets/operacional/midias_list_widget.dart';
 import '../../widgets/operacional/contatos_vinculados_widget.dart';
 import '../../theme/app_theme.dart';
-import 'contato_unified_screen.dart';
 
 class EmpresaUnifiedScreen extends StatefulWidget {
   final String? empresaId;
@@ -39,7 +37,8 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
   bool _isEditing = false;
   bool _isLoading = false;
 
-  List<ContatoModel> _contatos = [];
+  // ⭐ RELACIONAMENTOS
+  List<ContatoModel> _contatosVinculados = [];
   List<TelefoneModel> _telefones = [];
   List<EmailModel> _emails = [];
   List<EnderecoModel> _enderecos = [];
@@ -50,7 +49,9 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
     super.initState();
     _isEditing = widget.empresaId != null;
     if (_isEditing) {
-      _loadEmpresaData();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadEmpresaData();
+      });
     }
   }
 
@@ -65,188 +66,58 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
   }
 
   Future<void> _loadEmpresaData() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
-    final provider = context.read<EmpresaProvider>();
-    await provider.loadEmpresaById(widget.empresaId!);
-
-    final empresa = provider.selectedEmpresa;
-    if (empresa != null && mounted) {
-      setState(() {
-        _nomeController.text = empresa.nome;
-        _razaoController.text = empresa.razaoSocial;
-        _qualif = empresa.qualif;
-        _tipoContr = empresa.tipoContr;
-        _cnpjController.text = empresa.cnpj ?? '';
-        _ieController.text = empresa.ie ?? '';
-        _obsController.text = empresa.obs ?? '';
-        _contatos = List.from(empresa.contatos);
-        _telefones = List.from(empresa.telefones);
-        _emails = List.from(empresa.emails);
-        _enderecos = List.from(empresa.enderecos);
-        _midias = List.from(empresa.midias);
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _vincularContato() async {
-    final contatoProvider = context.read<ContatoProvider>();
-    await contatoProvider.loadContatos();
-
-    final contatosDisponiveis = contatoProvider.contatos
-        .where((c) => !_contatos.any((vinculado) => vinculado.id == c.id))
-        .toList();
-
-    if (contatosDisponiveis.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Todos os contatos já estão vinculados a esta empresa'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-
-    final contatoSelecionado = await showDialog<ContatoModel>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Selecionar Contato'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 300,
-          child: ListView.builder(
-            itemCount: contatosDisponiveis.length,
-            itemBuilder: (context, index) {
-              final contato = contatosDisponiveis[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppTheme.primaryColor,
-                  child: Text(
-                    contato.initials,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                title: Text(contato.nome),
-                subtitle: Text(contato.tipoVinculoLabel),
-                onTap: () => Navigator.pop(context, contato),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-        ],
-      ),
-    );
-
-    if (contatoSelecionado != null && mounted) {
-      if (_contatos.any((c) => c.id == contatoSelecionado.id)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Este contato já está vinculado à empresa'),
-            backgroundColor: AppTheme.warningColor,
-            duration: Duration(seconds: 2),
-          ),
-        );
-        return;
-      }
-
-      setState(() {
-        _contatos.add(contatoSelecionado);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Contato "${contatoSelecionado.nome}" vinculado!'),
-          backgroundColor: AppTheme.successColor,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  Future<void> _criarNovoContato() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ContatoUnifiedScreen(
-          empresaId: widget.empresaId,
-        ),
-        fullscreenDialog: true,
-      ),
-    );
-
-    if (result != null && mounted) {
-      print('✅ Contato criado com ID: $result');
-
-      final contatoProvider = context.read<ContatoProvider>();
-      await contatoProvider.loadContatos();
-
-      final empresaProvider = context.read<EmpresaProvider>();
-      await empresaProvider.loadEmpresaById(widget.empresaId!);
-
-      if (empresaProvider.selectedEmpresa != null) {
-        setState(() {
-          _contatos = List.from(empresaProvider.selectedEmpresa!.contatos);
-        });
-        print('✅ Contatos atualizados: ${_contatos.length}');
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ Novo contato criado e vinculado com sucesso!'),
-          backgroundColor: AppTheme.successColor,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  Future<String?> _validateCnpj(String? value) async {
-    if (value == null || value.isEmpty) return null;
-
-    final clean = value.replaceAll(RegExp(r'\D'), '');
-    if (clean.length != 14) return 'CNPJ deve ter 14 dígitos';
-
-    if (_isEditing && _cnpjController.text == value) return null;
 
     try {
       final provider = context.read<EmpresaProvider>();
-      final existing = await provider.checkCnpj(clean);
-      if (existing != null) {
-        return 'CNPJ já cadastrado para a empresa "${existing.nome}"';
+      await provider.loadEmpresaById(widget.empresaId!);
+
+      final empresa = provider.selectedEmpresa;
+      if (empresa != null && mounted) {
+        setState(() {
+          _nomeController.text = empresa.nome;
+          _razaoController.text = empresa.razaoSocial ?? '';
+          _qualif = empresa.qualif;
+          _tipoContr = empresa.tipoContr;
+          _cnpjController.text = empresa.cnpj ?? '';
+          _ieController.text = empresa.ie ?? '';
+          _obsController.text = empresa.obs ?? '';
+          _contatosVinculados = List.from(empresa.contatos);
+          _telefones = List.from(empresa.telefones);
+          _emails = List.from(empresa.emails);
+          _enderecos = List.from(empresa.enderecos);
+          _midias = List.from(empresa.midias);
+        });
       }
     } catch (e) {
-      print('Erro ao verificar CNPJ: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar empresa: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-
-    return null;
   }
 
-  Future<void> _save() async {
+  Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      final cleanCnpj = _cnpjController.text.replaceAll(RegExp(r'\D'), '');
-
       final data = {
-        'nome': _nomeController.text.trim(),
-        'razao_social': _razaoController.text.trim(),
+        'nome': _nomeController.text,
+        'razaoSocial': _razaoController.text,
         'qualif': _qualif,
-        'tipo_contr': _tipoContr,
-        'cnpj': cleanCnpj,
-        'ie': _ieController.text.trim(),
-        'obs': _obsController.text.trim(),
-        'contatos': _contatos,
-        'telefones': _telefones,
-        'emails': _emails,
-        'enderecos': _enderecos,
-        'midias': _midias,
+        'tipoContr': _tipoContr,
+        'cnpj': _cnpjController.text,
+        'ie': _ieController.text,
+        'obs': _obsController.text,
       };
 
       final provider = context.read<EmpresaProvider>();
@@ -258,41 +129,26 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
         success = await provider.createEmpresa(data);
       }
 
-      if (mounted) setState(() => _isLoading = false);
-
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isEditing ? '✅ Empresa atualizada!' : '✅ Empresa criada!'),
-            backgroundColor: AppTheme.successColor,
+            content: Text(_isEditing ? 'Empresa atualizada!' : 'Empresa criada!'),
+            backgroundColor: Colors.green,
           ),
         );
         context.go('/operacional/empresas');
-      } else if (mounted && provider.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(provider.error!),
-            backgroundColor: AppTheme.dangerColor,
-            duration: const Duration(seconds: 4),
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro: $e'),
-            backgroundColor: AppTheme.dangerColor,
+            content: Text('Erro: ${e.toString()}'),
+            backgroundColor: Colors.red,
           ),
         );
       }
-    }
-  }
-
-  void _goBack() {
-    if (mounted) {
-      context.go('/operacional/empresas');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -305,12 +161,14 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: _goBack,
+          onPressed: () => context.go('/operacional/empresas'),
+          tooltip: 'Voltar para lista de empresas',
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: _isLoading ? null : _save,
+            onPressed: _isLoading ? null : _salvar,
+            tooltip: 'Salvar',
           ),
         ],
       ),
@@ -318,217 +176,246 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildInfoForm(),
-                  const SizedBox(height: 16),
-                  const Divider(thickness: 2, color: AppTheme.primaryColor),
-                  const SizedBox(height: 8),
-
-                  ContatosVinculadosWidget(
-                    contatos: _contatos,
-                    onChanged: (novos) => setState(() => _contatos = novos),
-                    onAddContato: _vincularContato,
-                    onCriarNovoContato: _criarNovoContato,
-                  ),
-
-                  TelefoneListWidget(
-                    telefones: _telefones,
-                    onChanged: (novos) => setState(() => _telefones = novos),
-                  ),
-
-                  EmailListWidget(
-                    emails: _emails,
-                    onChanged: (novos) => setState(() => _emails = novos),
-                  ),
-
-                  EnderecoListWidget(
-                    enderecos: _enderecos,
-                    onChanged: (novos) => setState(() => _enderecos = novos),
-                  ),
-
-                  MidiasListWidget(
-                    midias: _midias,
-                    onChanged: (novos) => setState(() => _midias = novos),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _isLoading ? null : _goBack,
-                          child: const Text('Cancelar'),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    // ============================================
+                    // DADOS DA EMPRESA
+                    // ============================================
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _nomeController,
+                              decoration: const InputDecoration(
+                                labelText: 'Nome *',
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Nome é obrigatório';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _razaoController,
+                              decoration: const InputDecoration(
+                                labelText: 'Razão Social',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _cnpjController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'CNPJ',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _ieController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Inscrição Estadual',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: _qualif,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Qualificação',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'INTERNA',
+                                        child: Text('Interna'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'COLIGADA',
+                                        child: Text('Coligada'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'OPERACIONAL',
+                                        child: Text('Operacional'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'PESSOA_FISICA',
+                                        child: Text('Pessoa Física'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'FORNECEDOR',
+                                        child: Text('Fornecedor'),
+                                      ),
+                                    ],
+                                    onChanged: (value) => setState(() => _qualif = value!),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: _tipoContr,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Tipo Contratação',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'RPA',
+                                        child: Text('RPA'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'CNPJ',
+                                        child: Text('CNPJ'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'MEI',
+                                        child: Text('MEI'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'ADH',
+                                        child: Text('Ad-Hoc'),
+                                      ),
+                                    ],
+                                    onChanged: (value) => setState(() => _tipoContr = value!),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _obsController,
+                              decoration: const InputDecoration(
+                                labelText: 'Observações',
+                                border: OutlineInputBorder(),
+                              ),
+                              maxLines: 3,
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _save,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ============================================
+                    // ⭐ CONTATOS VINCULADOS
+                    // ============================================
+                    ContatosVinculadosWidget(
+                      contatos: _contatosVinculados,
+                      empresaId: widget.empresaId,
+                      onContatoVinculado: (contato) {
+                        setState(() {
+                          _contatosVinculados.add(contato);
+                        });
+                      },
+                      onContatoDesvinculado: (contatoId) {
+                        setState(() {
+                          _contatosVinculados
+                              .removeWhere((c) => c.id == contatoId);
+                        });
+                      },
+                      onContatoCriado: (contato) {
+                        setState(() {
+                          _contatosVinculados.add(contato);
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ============================================
+                    // ⭐ TELEFONES
+                    // ============================================
+                    TelefoneListWidget(
+                      telefones: _telefones,
+                      onChanged: (novaLista) {
+                        if (mounted) {
+                          setState(() => _telefones = novaLista);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ============================================
+                    // ⭐ EMAILS
+                    // ============================================
+                    EmailListWidget(
+                      emails: _emails,
+                      onChanged: (novaLista) {
+                        if (mounted) {
+                          setState(() => _emails = novaLista);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ============================================
+                    // ⭐ ENDEREÇOS
+                    // ============================================
+                    EnderecoListWidget(
+                      enderecos: _enderecos,
+                      onChanged: (novaLista) {
+                        if (mounted) {
+                          setState(() => _enderecos = novaLista);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ============================================
+                    // ⭐ MÍDIAS SOCIAIS
+                    // ============================================
+                    MidiasListWidget(
+                      midias: _midias,
+                      onChanged: (novaLista) {
+                        if (mounted) {
+                          setState(() => _midias = novaLista);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ============================================
+                    // BOTÕES
+                    // ============================================
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => context.go('/operacional/empresas'),
+                          child: const Text('Cancelar'),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _salvar,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
                             foregroundColor: Colors.white,
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Text(_isEditing ? 'Atualizar' : 'Salvar'),
+                          child: Text(_isLoading ? 'Salvando...' : 'Salvar'),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-    );
-  }
-
-  Widget _buildInfoForm() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nomeController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome Fantasia *',
-                  hintText: 'Digite o nome fantasia',
-                  prefixIcon: Icon(Icons.business_outlined),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Nome é obrigatório';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _razaoController,
-                decoration: const InputDecoration(
-                  labelText: 'Razão Social *',
-                  hintText: 'Digite a razão social',
-                  prefixIcon: Icon(Icons.description_outlined),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Razão Social é obrigatória';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _qualif,
-                decoration: const InputDecoration(
-                  labelText: 'Qualificação *',
-                  prefixIcon: Icon(Icons.verified_outlined),
-                ),
-                items: EmpresaModel.qualifLabels.entries.map((entry) {
-                  return DropdownMenuItem(
-                    value: entry.key,
-                    child: Text(entry.value),
-                  );
-                }).toList(),
-                onChanged: (value) => setState(() => _qualif = value!),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Qualificação é obrigatória';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _tipoContr,
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de Contratação *',
-                  prefixIcon: Icon(Icons.assignment_outlined),
-                ),
-                items: EmpresaModel.tipoContrLabels.entries.map((entry) {
-                  return DropdownMenuItem(
-                    value: entry.key,
-                    child: Text(entry.value),
-                  );
-                }).toList(),
-                onChanged: (value) => setState(() => _tipoContr = value!),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Tipo de contratação é obrigatório';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _cnpjController,
-                decoration: const InputDecoration(
-                  labelText: 'CNPJ',
-                  hintText: 'XX.XXX.XXX/XXXX-XX',
-                  prefixIcon: Icon(Icons.credit_card_outlined),
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [_CnpjInputFormatter()],
-                validator: (value) {
-                  if (value != null && value.isNotEmpty) {
-                    final clean = value.replaceAll(RegExp(r'\D'), '');
-                    if (clean.length != 14) return 'CNPJ deve ter 14 dígitos';
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  final provider = context.read<EmpresaProvider>();
-                  if (provider.error != null && provider.error!.contains('CNPJ')) {
-                    provider.clearError();
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _ieController,
-                decoration: const InputDecoration(
-                  labelText: 'Inscrição Estadual',
-                  hintText: 'Digite a IE',
-                  prefixIcon: Icon(Icons.numbers_outlined),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _obsController,
-                decoration: const InputDecoration(
-                  labelText: 'Observações',
-                  hintText: 'Informações adicionais',
-                  prefixIcon: Icon(Icons.note_outlined),
-                ),
-                maxLines: 3,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CnpjInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final text = newValue.text.replaceAll(RegExp(r'\D'), '');
-    final buffer = StringBuffer();
-    for (int i = 0; i < text.length; i++) {
-      if (i == 2 || i == 5) buffer.write('.');
-      if (i == 8) buffer.write('/');
-      if (i == 12) buffer.write('-');
-      buffer.write(text[i]);
-    }
-    return TextEditingValue(
-      text: buffer.toString(),
-      selection: TextSelection.collapsed(offset: buffer.length),
     );
   }
 }

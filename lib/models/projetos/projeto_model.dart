@@ -1,6 +1,9 @@
 /// ============================================
-/// MODELO: Projeto
+/// MODELO: Projeto (Especificação Completa)
 /// ============================================
+
+// ⭐ IMPORTANTE: Importar o MetaModel
+import 'meta_model.dart';
 
 class ProjetoModel {
   final String id;
@@ -22,6 +25,9 @@ class ProjetoModel {
   final DateTime? dataEntrega;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  // ⭐ Relacionamento com Metas
+  List<MetaModel> metas;
 
   static const String STATUS_ORCAMENTO = 'ORÇAMENTO';
   static const String STATUS_EMITIDO = 'EMITIDO';
@@ -68,6 +74,7 @@ class ProjetoModel {
     this.dataEntrega,
     this.createdAt,
     this.updatedAt,
+    this.metas = const [],
   });
 
   factory ProjetoModel.fromJson(Map<String, dynamic> json) {
@@ -127,4 +134,9 @@ class ProjetoModel {
   }
 
   String get statusLabel => statusLabels[statusProjeto] ?? statusProjeto;
+
+  static bool validarProcesso(String processo) {
+    final regex = RegExp(r'^\d{5}-\d{8}/\d{4}-\d{2}$');
+    return regex.hasMatch(processo);
+  }
 }

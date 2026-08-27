@@ -9,12 +9,10 @@ import '../../models/operacional/email_model.dart';
 import '../../models/operacional/endereco_model.dart';
 import '../../models/operacional/midias_model.dart';
 import '../../services/operacional/contato_service.dart';
-import '../../services/operacional/relacionamento_service.dart';
 
 class ContatoProvider extends ChangeNotifier {
   final ContatoService _service = ContatoService();
-  final RelacionamentoService _relService = RelacionamentoService();
-  
+
   List<ContatoModel> _contatos = [];
   ContatoModel? _selectedContato;
   bool _isLoading = false;
@@ -32,12 +30,13 @@ class ContatoProvider extends ChangeNotifier {
 
     try {
       _contatos = await _service.list();
+
       for (var i = 0; i < _contatos.length; i++) {
         final telefones = await _service.getTelefones(_contatos[i].id);
         final emails = await _service.getEmails(_contatos[i].id);
         final enderecos = await _service.getEnderecos(_contatos[i].id);
         final midias = await _service.getMidias(_contatos[i].id);
-        
+
         _contatos[i] = _contatos[i].copyWith(
           telefones: telefones,
           emails: emails,
@@ -45,10 +44,8 @@ class ContatoProvider extends ChangeNotifier {
           midias: midias,
         );
       }
-      print('✅ Contatos carregados: ${_contatos.length}');
     } catch (e) {
       _error = e.toString();
-      print('❌ Erro ao carregar contatos: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -67,14 +64,13 @@ class ContatoProvider extends ChangeNotifier {
         final emails = await _service.getEmails(id);
         final enderecos = await _service.getEnderecos(id);
         final midias = await _service.getMidias(id);
-        
+
         _selectedContato = contato.copyWith(
           telefones: telefones,
           emails: emails,
           enderecos: enderecos,
           midias: midias,
         );
-        print('✅ Contato carregado: ${_selectedContato?.nome}');
       }
     } catch (e) {
       _error = e.toString();
@@ -90,42 +86,13 @@ class ContatoProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print('=== CRIANDO CONTATO ===');
-      
-      // ⭐ EXTRAIR E CASTAR CORRETAMENTE
-      final telefones = (data['telefones'] as List?)?.cast<TelefoneModel>() ?? [];
-      final emails = (data['emails'] as List?)?.cast<EmailModel>() ?? [];
-      final enderecos = (data['enderecos'] as List?)?.cast<EnderecoModel>() ?? [];
-      final midias = (data['midias'] as List?)?.cast<MidiasModel>() ?? [];
-      
-      data.remove('telefones');
-      data.remove('emails');
-      data.remove('enderecos');
-      data.remove('midias');
-
       final contato = await _service.create(data);
-      print('✅ Contato criado: ${contato.id} - ${contato.nome}');
-      
-      final telefonesSalvos = await _relService.saveTelefones(contato.id, telefones);
-      final emailsSalvos = await _relService.saveEmails(contato.id, emails);
-      final enderecosSalvos = await _relService.saveEnderecos(contato.id, enderecos);
-      final midiasSalvas = await _relService.saveMidias(contato.id, midias);
-      
-      _selectedContato = contato.copyWith(
-        telefones: telefonesSalvos,
-        emails: emailsSalvos,
-        enderecos: enderecosSalvos,
-        midias: midiasSalvas,
-      );
-      
-      await loadContatos();
-      
-      print('✅ Contato criado e listas atualizadas');
+      _contatos.insert(0, contato);
+      _selectedContato = contato;
       notifyListeners();
       return true;
     } catch (e) {
       _error = e.toString();
-      print('❌ Erro ao criar contato: $e');
       notifyListeners();
       return false;
     } finally {
@@ -140,42 +107,21 @@ class ContatoProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print('=== ATUALIZANDO CONTATO ===');
-      
-      // ⭐ EXTRAIR E CASTAR CORRETAMENTE
-      final telefones = (data['telefones'] as List?)?.cast<TelefoneModel>() ?? [];
-      final emails = (data['emails'] as List?)?.cast<EmailModel>() ?? [];
-      final enderecos = (data['enderecos'] as List?)?.cast<EnderecoModel>() ?? [];
-      final midias = (data['midias'] as List?)?.cast<MidiasModel>() ?? [];
-      
-      data.remove('telefones');
-      data.remove('emails');
-      data.remove('enderecos');
-      data.remove('midias');
-
       final contato = await _service.update(id, data);
-      print('✅ Contato atualizado: ${contato.id}');
-      
-      final telefonesSalvos = await _relService.saveTelefones(id, telefones);
-      final emailsSalvos = await _relService.saveEmails(id, emails);
-      final enderecosSalvos = await _relService.saveEnderecos(id, enderecos);
-      final midiasSalvas = await _relService.saveMidias(id, midias);
-      
-      _selectedContato = contato.copyWith(
-        telefones: telefonesSalvos,
-        emails: emailsSalvos,
-        enderecos: enderecosSalvos,
-        midias: midiasSalvas,
-      );
-      
-      await loadContatos();
-      
-      print('✅ Contato atualizado e listas atualizadas');
+
+      final index = _contatos.indexWhere((c) => c.id == id);
+      if (index != -1) {
+        _contatos[index] = contato;
+      }
+
+      if (_selectedContato?.id == id) {
+        _selectedContato = contato;
+      }
+
       notifyListeners();
       return true;
     } catch (e) {
       _error = e.toString();
-      print('❌ Erro ao atualizar contato: $e');
       notifyListeners();
       return false;
     } finally {
@@ -191,8 +137,10 @@ class ContatoProvider extends ChangeNotifier {
 
     try {
       await _service.delete(id);
-      await loadContatos();
-      if (_selectedContato?.id == id) _selectedContato = null;
+      _contatos.removeWhere((c) => c.id == id);
+      if (_selectedContato?.id == id) {
+        _selectedContato = null;
+      }
       notifyListeners();
       return true;
     } catch (e) {

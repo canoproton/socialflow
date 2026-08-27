@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'providers/operacional/contato_provider.dart';
+import 'providers/operacional/empresa_provider.dart';
+import 'providers/projetos/projeto_provider.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 
@@ -7,14 +11,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // 🔹 SUBSTITUA PELAS SUAS CREDENCIAIS
     await Supabase.initialize(
-      url: 'https://seu-projeto.supabase.co',
-      anonKey: 'sua-chave-anon',
+      url: 'https://omtgcvoxqzlsbrxvwgik.supabase.co',
+      anonKey: 'sb_publishable_0tGIXruer3GCFJVDkVpodw_GPqJtWbC', // ← SUA CHAVE COMPLETA
     );
-    print('✅ Supabase conectado!');
+    debugPrint('✅ Supabase conectado!');
   } catch (e) {
-    print('❌ Erro: $e');
+    debugPrint('❌ Erro ao conectar Supabase: $e');
   }
 
   runApp(const MyApp());
@@ -25,11 +28,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'SocialFlow',
-      theme: AppTheme.lightTheme,
-      routerConfig: appRouter,
-      debugShowCheckedModeBanner: false,
+    return MultiProvider(
+      providers: [
+        // ⭐ PROVIDERS DO OPERACIONAL
+        ChangeNotifierProvider(create: (_) => EmpresaProvider()),
+        ChangeNotifierProvider(create: (_) => ContatoProvider()),
+        // ⭐ PROVIDER DO PROJETOS
+        ChangeNotifierProvider(create: (_) => ProjetoProvider()),
+      ],
+      child: MaterialApp.router(
+        title: 'SocialFlow',
+        theme: AppTheme.lightTheme,
+        routerConfig: appRouter,
+        debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }

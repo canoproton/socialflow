@@ -2,6 +2,9 @@
 /// MODELO: Meta do Projeto
 /// ============================================
 
+// ⭐ IMPORTANTE: Importar o EtapaModel
+import 'etapa_model.dart';
+
 class MetaModel {
   final String id;
   final String projetoId;
@@ -23,6 +26,9 @@ class MetaModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  // ⭐ Relacionamento com Etapas
+  List<EtapaModel> etapas;
+
   MetaModel({
     required this.id,
     required this.projetoId,
@@ -43,6 +49,7 @@ class MetaModel {
     this.atualizadoEm,
     this.createdAt,
     this.updatedAt,
+    this.etapas = const [],
   });
 
   factory MetaModel.fromJson(Map<String, dynamic> json) {

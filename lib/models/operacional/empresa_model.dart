@@ -1,5 +1,5 @@
 /// ============================================
-/// MODELO: Empresa (COMPLETO)
+/// MODELO: Empresa
 /// ============================================
 
 import 'contato_model.dart';
@@ -21,7 +21,7 @@ class EmpresaModel {
   final String? atualizadoPor;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-  
+
   // ⭐ RELACIONAMENTOS
   List<ContatoModel> contatos;
   List<TelefoneModel> telefones;
@@ -76,11 +76,11 @@ class EmpresaModel {
       contatoPrincipalId: json['contato_principal']?.toString(),
       obs: json['obs']?.toString(),
       atualizadoPor: json['atualizado_por']?.toString(),
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at'].toString()) 
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'].toString())
           : null,
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at'].toString()) 
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'].toString())
           : null,
     );
   }
@@ -142,24 +142,7 @@ class EmpresaModel {
     );
   }
 
-  String get qualifLabel {
-    return qualifLabels[qualif] ?? qualif;
-  }
-
-  String get tipoContrLabel {
-    return tipoContrLabels[tipoContr] ?? tipoContr;
-  }
-
-  String get cnpjFormatado {
-    if (cnpj == null || cnpj!.length != 14) return cnpj ?? '';
-    return '${cnpj!.substring(0,2)}.${cnpj!.substring(2,5)}.${cnpj!.substring(5,8)}/${cnpj!.substring(8,12)}-${cnpj!.substring(12,14)}';
-  }
-
-  String get initials {
-    final names = nome.split(' ');
-    if (names.length >= 2) {
-      return '${names[0][0]}${names[1][0]}'.toUpperCase();
-    }
-    return nome.substring(0, 2).toUpperCase();
-  }
+  String get qualifLabel => qualifLabels[qualif] ?? qualif;
+  String get tipoContrLabel => tipoContrLabels[tipoContr] ?? tipoContr;
+  String get initials => nome.isNotEmpty ? nome[0].toUpperCase() : 'E';
 }

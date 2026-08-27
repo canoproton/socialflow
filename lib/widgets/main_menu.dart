@@ -3,9 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 
 class MainMenu extends StatelessWidget {
-  final bool isCollapsed;
-
-  const MainMenu({super.key, this.isCollapsed = false});
+  const MainMenu({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -13,6 +11,7 @@ class MainMenu extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
+          // Header
           DrawerHeader(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -44,7 +43,7 @@ class MainMenu extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Dashboard
           _buildMenuItem(
             context,
@@ -52,9 +51,10 @@ class MainMenu extends StatelessWidget {
             label: 'Dashboard',
             route: '/',
           ),
-          
-          // Separador
+
           const Divider(),
+
+          // MÓDULOS
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
@@ -67,33 +67,51 @@ class MainMenu extends StatelessWidget {
               ),
             ),
           ),
-          
-          // ✅ Operacional (Já existe)
+
+          // ⭐ 1. USUÁRIOS
           _buildMenuItem(
             context,
-            icon: Icons.business,
-            label: 'Operacional',
-            route: '/operacional',
+            icon: Icons.people,
+            label: 'Usuários',
+            route: '/usuarios',
+            isDisabled: true,
           ),
-          
-          // ✅ Projetos (Em andamento)
+
+          // ⭐ 2. PROJETOS
           _buildMenuItem(
             context,
             icon: Icons.folder,
             label: 'Projetos',
             route: '/projetos',
           ),
-          
-          // 🔜 Tarefas (Próximo)
+
+          // ⭐ 3. TAREFAS
           _buildMenuItem(
             context,
-            icon: Icons.task,
+            icon: Icons.checklist,
             label: 'Tarefas',
             route: '/tarefas',
-            isDisabled: true, // Desabilitado até implementar
+            isDisabled: true,
           ),
-          
-          // 🔜 Financeiro (Futuro)
+
+          // ⭐ 4. OPERACIONAL - AGORA APONTA PARA /operacional (ÍNDICE)
+          _buildMenuItem(
+            context,
+            icon: Icons.business_center,
+            label: 'Operacional',
+            route: '/operacional',  // ← MUDOU AQUI!
+          ),
+
+          // ⭐ 5. CONTABILIDADE
+          _buildMenuItem(
+            context,
+            icon: Icons.account_balance,
+            label: 'Contabilidade',
+            route: '/contabilidade',
+            isDisabled: true,
+          ),
+
+          // ⭐ 6. FINANCEIRO
           _buildMenuItem(
             context,
             icon: Icons.attach_money,
@@ -101,15 +119,34 @@ class MainMenu extends StatelessWidget {
             route: '/financeiro',
             isDisabled: true,
           ),
-          
+
+          // ⭐ 7. DOCUMENTOS
+          _buildMenuItem(
+            context,
+            icon: Icons.folder_open,
+            label: 'Documentos',
+            route: '/documentos',
+            isDisabled: true,
+          ),
+
+          // ⭐ 8. IA
+          _buildMenuItem(
+            context,
+            icon: Icons.settings_overscan,
+            label: 'IA',
+            route: '/ia',
+            isDisabled: true,
+          ),
+
           const Divider(),
-          
+
           // Configurações
           _buildMenuItem(
             context,
             icon: Icons.settings,
             label: 'Configurações',
             route: '/configuracoes',
+            isDisabled: true,
           ),
         ],
       ),
@@ -123,29 +160,30 @@ class MainMenu extends StatelessWidget {
     required String route,
     bool isDisabled = false,
   }) {
-    final isActive = !isDisabled && 
+    final isActive = !isDisabled &&
         (GoRouterState.of(context).uri.path == route ||
-        (route != '/' && GoRouterState.of(context).uri.path.startsWith(route)));
+            (route != '/' &&
+                GoRouterState.of(context).uri.path.startsWith(route)));
 
     return ListTile(
       leading: Icon(
         icon,
-        color: isDisabled 
-            ? AppTheme.textLight 
+        color: isDisabled
+            ? AppTheme.textLight
             : (isActive ? AppTheme.primaryColor : AppTheme.textSecondary),
       ),
       title: Text(
         label,
         style: TextStyle(
-          color: isDisabled 
-              ? AppTheme.textLight 
+          color: isDisabled
+              ? AppTheme.textLight
               : (isActive ? AppTheme.primaryColor : AppTheme.textPrimary),
           fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
         ),
       ),
       tileColor: isActive ? AppTheme.primaryColor.withOpacity(0.08) : null,
-      onTap: isDisabled 
-          ? null 
+      onTap: isDisabled
+          ? null
           : () {
               context.go(route);
               Navigator.pop(context);

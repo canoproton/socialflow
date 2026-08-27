@@ -25,10 +25,9 @@ class _EmpresaListScreenState extends State<EmpresaListScreen> {
     });
   }
 
-  // ⭐ CORRIGIDO: Usar context.go com verificação mounted
   void _goBack() {
     if (mounted) {
-      context.go('/home');
+      context.go('/');
     }
   }
 
@@ -47,7 +46,7 @@ class _EmpresaListScreenState extends State<EmpresaListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => context.go('/operacional/empresas/novo'),
+            onPressed: () => context.go('/operacional/empresa/novo'),
             tooltip: 'Nova Empresa',
           ),
           IconButton(
@@ -98,9 +97,9 @@ class _EmpresaListScreenState extends State<EmpresaListScreen> {
                   const Icon(Icons.business_outlined, size: 64, color: AppTheme.textLight),
                   const SizedBox(height: 16),
                   const Text('Nenhuma empresa cadastrada'),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: () => context.go('/operacional/empresas/novo'),
+                    onPressed: () => context.go('/operacional/empresa/novo'),
                     icon: const Icon(Icons.add),
                     label: const Text('Criar Primeira Empresa'),
                     style: ElevatedButton.styleFrom(
@@ -113,86 +112,43 @@ class _EmpresaListScreenState extends State<EmpresaListScreen> {
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: () => provider.loadEmpresas(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: provider.empresas.length,
-              itemBuilder: (context, index) {
-                final empresa = provider.empresas[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  elevation: 2,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: AppTheme.primaryColor,
-                      child: Text(
-                        empresa.initials,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    title: Text(empresa.nome, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Qualif: ${empresa.qualifLabel}', style: const TextStyle(fontSize: 12)),
-                        if (empresa.cnpj != null && empresa.cnpj!.isNotEmpty)
-                          Text('CNPJ: ${empresa.cnpjFormatado}', style: const TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 20),
-                          onPressed: () => context.go('/operacional/empresas/editar/${empresa.id}'),
-                          tooltip: 'Editar',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 20, color: AppTheme.dangerColor),
-                          onPressed: () => _confirmDelete(empresa),
-                          tooltip: 'Excluir',
-                        ),
-                      ],
+          return ListView.builder(
+            padding: const EdgeInsets.all(8),
+            itemCount: provider.empresas.length,
+            itemBuilder: (context, index) {
+              final empresa = provider.empresas[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppTheme.primaryColor,
+                    child: Text(
+                      empresa.nome.substring(0, 1).toUpperCase(),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
-                );
-              },
-            ),
+                  title: Text(
+                    empresa.nome,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(empresa.razaoSocial ?? ''),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => context.go('/operacional/empresa/${empresa.id}'),
+                        tooltip: 'Editar',
+                      ),
+                    ],
+                  ),
+                  onTap: () => context.go('/operacional/empresa/${empresa.id}'),
+                ),
+              );
+            },
           );
         },
       ),
     );
-  }
-
-  Future<void> _confirmDelete(EmpresaModel empresa) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmar Exclusão'),
-        content: Text('Tem certeza que deseja excluir a empresa "${empresa.nome}"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppTheme.dangerColor),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && mounted) {
-      final provider = context.read<EmpresaProvider>();
-      final success = await provider.deleteEmpresa(empresa.id);
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Empresa "${empresa.nome}" excluída!'),
-            backgroundColor: AppTheme.successColor,
-          ),
-        );
-      }
-    }
   }
 }

@@ -1,5 +1,5 @@
 /// ============================================
-/// SERVIÇO: Projeto (CRUD + Cálculos)
+/// SERVIÇO: Projeto (CRUD + Cálculos + Metas + Etapas)
 /// ============================================
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -12,9 +12,11 @@ class ProjetoService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   // ============================================
-  // LISTAR PROJETOS (VERSÃO SIMPLIFICADA - SEM FILTROS)
+  // LISTAR PROJETOS
   // ============================================
 
+  /// Lista todos os projetos do banco de dados
+  /// Retorna: List<ProjetoModel>
   Future<List<ProjetoModel>> list() async {
     DebugService.log(
       module: 'PROJETO_SERVICE',
@@ -54,6 +56,8 @@ class ProjetoService {
   // BUSCAR PROJETO POR ID
   // ============================================
 
+  /// Busca um projeto pelo ID
+  /// Retorna: ProjetoModel? ou null se não encontrado
   Future<ProjetoModel?> getById(String id) async {
     DebugService.log(
       module: 'PROJETO_SERVICE',
@@ -94,6 +98,8 @@ class ProjetoService {
   // BUSCAR PROJETO COMPLETO (COM METAS E ETAPAS)
   // ============================================
 
+  /// Busca um projeto com todas as metas e etapas
+  /// Retorna: ProjetoModel completo
   Future<ProjetoModel> getCompleto(String id) async {
     DebugService.log(
       module: 'PROJETO_SERVICE',
@@ -204,9 +210,11 @@ class ProjetoService {
   }
 
   // ============================================
-  // CRIAR PROJETO
+  // CRIAR PROJETO (APENAS PROJETO, SEM METAS)
   // ============================================
 
+  /// Cria apenas o projeto (sem metas e etapas)
+  /// Usado para criação básica
   Future<ProjetoModel> create(Map<String, dynamic> data) async {
     DebugService.log(
       module: 'PROJETO_SERVICE',
@@ -244,9 +252,131 @@ class ProjetoService {
   }
 
   // ============================================
+  // CRIAR PROJETO COMPLETO (COM METAS E ETAPAS) ⭐ REGRA 2
+  // ============================================
+
+  /// Cria projeto com metas e etapas em uma única transação
+  /// ⭐ REGRA 2: Metas e Etapas são criadas junto com o projeto
+  /// ⭐ REGRA 4: Calcula valor_etapa = valor_unitario * quantidade
+  /// ⭐ REGRA 5: Calcula valor_total_metas = soma(valor_total_etapas)
+  Future<ProjetoModel> createCompleto(Map<String, dynamic> data) async {
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'CREATE_COMPLETO',
+      data: 'Criando projeto com metas e etapas',
+    );
+
+    try {
+      // 1. Extrair metas do payload
+      final metasData = data.remove('metas') as List? ?? [];
+      
+      // 2. Validar se tem metas (Regra 2)
+      if (metasData.isEmpty) {
+        throw Exception('Projeto deve ter pelo menos uma meta');
+      }
+      
+      // 3. Validar se todas metas têm etapas (Regra 2)
+      for (var metaPayload in metasData) {
+        final etapasData = metaPayload['etapas'] as List? ?? [];
+        if (etapasData.isEmpty) {
+          throw Exception('Meta "${metaPayload['descricao']}" não tem etapas');
+        }
+      }
+      
+      // 4. Criar projeto
+      final response = await _supabase
+          .from('projetos')
+          .insert({
+            ...data,
+            'valor_total_metas': 0,
+            'saldo_projeto': 0,
+          })
+          .select()
+          .single();
+
+      final projeto = ProjetoModel.fromJson(response);
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'CREATE_COMPLETO',
+        data: 'Projeto criado: ${projeto.id}',
+      );
+
+      // 5. Criar metas e etapas
+      for (var i = 0; i < metasData.length; i++) {
+        final metaPayload = metasData[i];
+        final etapasData = metaPayload.remove('etapas') as List? ?? [];
+        
+        // Criar meta
+        final metaResponse = await _supabase
+            .from('meta_projetos')
+            .insert({
+              ...metaPayload,
+              'projeto_id': projeto.id,
+              'sequencia': i + 1,
+              'valor_total_etapas': 0,
+              'saldo_meta': 0,
+            })
+            .select()
+            .single();
+        
+        final meta = MetaModel.fromJson(metaResponse);
+        DebugService.log(
+          module: 'PROJETO_SERVICE',
+          action: 'CREATE_COMPLETO',
+          data: 'Meta criada: ${meta.id} - ${meta.descricao}',
+        );
+
+        // Criar etapas da meta
+        for (var j = 0; j < etapasData.length; j++) {
+          final etapaPayload = etapasData[j];
+          
+          // ⭐ REGRA 4: Calcular valor_etapa = valor_unitario * quantidade
+          final valorUnitario = (etapaPayload['valor_unitario'] ?? 0.0).toDouble();
+          final quantidade = (etapaPayload['quantidade'] ?? 0.0).toDouble();
+          final valorEtapa = valorUnitario * quantidade;
+
+          await _supabase
+              .from('etapas')
+              .insert({
+                ...etapaPayload,
+                'meta_projeto_id': meta.id,
+                'sequencia': j + 1,
+                'valor_etapa': valorEtapa,
+              });
+          
+          DebugService.log(
+            module: 'PROJETO_SERVICE',
+            action: 'CREATE_COMPLETO',
+            data: 'Etapa criada: ${etapaPayload['descricao']} - Valor: $valorEtapa',
+          );
+        }
+
+        // ⭐ REGRA 4: Recalcular total da meta
+        await _recalcularTotalMeta(meta.id);
+      }
+
+      // ⭐ REGRA 5: Recalcular totais do projeto
+      await _recalcularTotaisProjeto(projeto.id);
+
+      // Buscar projeto completo atualizado
+      return await getCompleto(projeto.id);
+      
+    } catch (e) {
+      DebugService.log(
+        module: 'PROJETO_SERVICE',
+        action: 'CREATE_COMPLETO',
+        error: e.toString(),
+        isError: true,
+      );
+      throw Exception('Erro ao criar projeto completo: $e');
+    }
+  }
+
+  // ============================================
   // ATUALIZAR PROJETO
   // ============================================
 
+  /// Atualiza apenas os dados do projeto (não metas/etapas)
   Future<ProjetoModel> update(String id, Map<String, dynamic> data) async {
     DebugService.log(
       module: 'PROJETO_SERVICE',
@@ -284,9 +414,10 @@ class ProjetoService {
   }
 
   // ============================================
-  // DELETAR PROJETO
+  // DELETAR PROJETO (CASCATA)
   // ============================================
 
+  /// Deleta projeto e todos os relacionamentos (metas e etapas)
   Future<void> delete(String id) async {
     DebugService.log(
       module: 'PROJETO_SERVICE',
@@ -338,61 +469,101 @@ class ProjetoService {
   }
 
   // ============================================
-  // RECALCULAR TOTAIS (Regras 4, 5, 6)
+  // CÁLCULOS AUTOMÁTICOS (Regras 4, 5, 6)
   // ============================================
 
+  /// ⭐ REGRA 4: Recalcular total de etapas da meta
+  /// valor_total_etapas = soma(valor_etapa) de todas etapas
+  Future<void> _recalcularTotalMeta(String metaId) async {
+    final etapasResponse = await _supabase
+        .from('etapas')
+        .select('valor_etapa')
+        .eq('meta_projeto_id', metaId);
+
+    final etapas = etapasResponse as List;
+    
+    double totalEtapas = 0;
+    for (var etapa in etapas) {
+      totalEtapas += (etapa['valor_etapa'] ?? 0.0).toDouble();
+    }
+
+    final meta = await _supabase
+        .from('meta_projetos')
+        .select('vl_meta_aprov')
+        .eq('id', metaId)
+        .single();
+
+    final vlMetaAprov = (meta['vl_meta_aprov'] ?? 0.0).toDouble();
+    final saldoMeta = vlMetaAprov - totalEtapas;
+
+    await _supabase
+        .from('meta_projetos')
+        .update({
+          'valor_total_etapas': totalEtapas,
+          'saldo_meta': saldoMeta,
+          'atualizado_em': DateTime.now().toIso8601String(),
+        })
+        .eq('id', metaId);
+
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'RECALCULAR_META',
+      data: 'Meta $metaId - Total Etapas: $totalEtapas, Saldo: $saldoMeta',
+    );
+  }
+
+  /// ⭐ REGRA 5: Recalcular totais do projeto
+  /// valor_total_metas = soma(valor_total_etapas) de todas metas
+  Future<void> _recalcularTotaisProjeto(String projetoId) async {
+    final metasResponse = await _supabase
+        .from('meta_projetos')
+        .select('valor_total_etapas')
+        .eq('projeto_id', projetoId);
+
+    final metas = metasResponse as List;
+    
+    double totalMetas = 0;
+    for (var meta in metas) {
+      totalMetas += (meta['valor_total_etapas'] ?? 0.0).toDouble();
+    }
+
+    final projeto = await getById(projetoId);
+    if (projeto == null) return;
+
+    final saldo = (projeto.valorTotalAportado ?? 0) - totalMetas;
+
+    await _supabase
+        .from('projetos')
+        .update({
+          'valor_total_metas': totalMetas,
+          'saldo_projeto': saldo,
+          'atualizado_em': DateTime.now().toIso8601String(),
+        })
+        .eq('id', projetoId);
+
+    DebugService.log(
+      module: 'PROJETO_SERVICE',
+      action: 'RECALCULAR_PROJETO',
+      data: 'Projeto $projetoId - Total Metas: $totalMetas, Saldo: $saldo',
+    );
+  }
+
+  /// ⭐ REGRA 6: Recalcular todos os totais (chamada pública)
   Future<void> recalcularTotais(String projetoId) async {
     DebugService.log(
       module: 'PROJETO_SERVICE',
       action: 'RECALCULAR_TOTAIS',
       data: 'Projeto ID: $projetoId',
     );
-
-    try {
-      final metasResponse = await _supabase
-          .from('meta_projetos')
-          .select('valor_total_etapas')
-          .eq('projeto_id', projetoId);
-
-      double totalMetas = 0;
-      for (var meta in metasResponse) {
-        totalMetas += (meta['valor_total_etapas'] ?? 0.0).toDouble();
-      }
-
-      final projeto = await getById(projetoId);
-      if (projeto == null) return;
-
-      final saldo = (projeto.valorTotalAportado ?? 0) - totalMetas;
-
-      await _supabase
-          .from('projetos')
-          .update({
-            'valor_total_metas': totalMetas,
-            'saldo_projeto': saldo,
-            'atualizado_em': DateTime.now().toIso8601String(),
-          })
-          .eq('id', projetoId);
-
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'RECALCULAR_TOTAIS',
-        data: 'Total Metas: $totalMetas, Saldo: $saldo',
-      );
-    } catch (e) {
-      DebugService.log(
-        module: 'PROJETO_SERVICE',
-        action: 'RECALCULAR_TOTAIS',
-        error: e.toString(),
-        isError: true,
-      );
-      throw Exception('Erro ao recalcular totais: $e');
-    }
+    await _recalcularTotaisProjeto(projetoId);
   }
 
   // ============================================
-  // VALIDAR SE PROJETO PODE SER APROVADO (Regra 8)
+  // VALIDAÇÃO (Regra 8)
   // ============================================
 
+  /// ⭐ REGRA 8: Verificar se projeto pode ser aprovado
+  /// Condições: tem metas e todas metas têm etapas
   Future<bool> podeAprovar(String projetoId) async {
     DebugService.log(
       module: 'PROJETO_SERVICE',

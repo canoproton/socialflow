@@ -5,17 +5,19 @@
 import 'package:flutter/material.dart';
 import '../../models/projetos/projeto_model.dart';
 import '../../services/projetos/projeto_service.dart';
-import '../../services/debug_service.dart';
+import '../debug_service.dart';
 
 class ProjetoProvider extends ChangeNotifier {
   final ProjetoService _projetoService = ProjetoService();
 
+  // ⭐ ESTADO
   List<ProjetoModel> _projetos = [];
   ProjetoModel? _selectedProjeto;
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic> _filters = {};
 
+  // ⭐ GETTERS
   List<ProjetoModel> get projetos => _projetos;
   ProjetoModel? get selectedProjeto => _selectedProjeto;
   bool get isLoading => _isLoading;
@@ -23,9 +25,10 @@ class ProjetoProvider extends ChangeNotifier {
   Map<String, dynamic> get filters => _filters;
 
   // ============================================
-  // LISTAR PROJETOS (COM FILTROS)
+  // LISTAR PROJETOS
   // ============================================
 
+  /// Carrega todos os projetos da API
   Future<void> loadProjetos() async {
     DebugService.log(
       module: 'PROJETO_PROVIDER',
@@ -62,6 +65,7 @@ class ProjetoProvider extends ChangeNotifier {
   // CARREGAR PROJETO POR ID
   // ============================================
 
+  /// Carrega um projeto específico pelo ID (sem metas/etapas)
   Future<void> loadProjetoById(String id) async {
     DebugService.log(
       module: 'PROJETO_PROVIDER',
@@ -98,6 +102,7 @@ class ProjetoProvider extends ChangeNotifier {
   // CARREGAR PROJETO COMPLETO
   // ============================================
 
+  /// Carrega projeto completo com metas e etapas
   Future<void> loadProjetoCompleto(String id) async {
     DebugService.log(
       module: 'PROJETO_PROVIDER',
@@ -131,9 +136,10 @@ class ProjetoProvider extends ChangeNotifier {
   }
 
   // ============================================
-  // CRUD - PROJETO
+  // CRUD - PROJETO (APENAS PROJETO)
   // ============================================
 
+  /// Cria apenas o projeto (sem metas e etapas)
   Future<bool> createProjeto(Map<String, dynamic> data) async {
     DebugService.log(
       module: 'PROJETO_PROVIDER',
@@ -172,6 +178,50 @@ class ProjetoProvider extends ChangeNotifier {
     }
   }
 
+  // ============================================
+  // CRUD - PROJETO COMPLETO (COM METAS E ETAPAS) ⭐ REGRA 2
+  // ============================================
+
+  /// ⭐ REGRA 2: Cria projeto com metas e etapas
+  Future<bool> createProjetoCompleto(Map<String, dynamic> data) async {
+    DebugService.log(
+      module: 'PROJETO_PROVIDER',
+      action: 'CREATE_PROJETO_COMPLETO',
+      data: 'Criando projeto completo',
+    );
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final projeto = await _projetoService.createCompleto(data);
+      _projetos.insert(0, projeto);
+      _selectedProjeto = projeto;
+      notifyListeners();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'CREATE_PROJETO_COMPLETO',
+        data: 'Projeto criado: ${projeto.id} com ${projeto.metas.length} metas',
+      );
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'CREATE_PROJETO_COMPLETO',
+        error: e.toString(),
+        isError: true,
+      );
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Atualiza apenas os dados do projeto
   Future<bool> updateProjeto(String id, Map<String, dynamic> data) async {
     DebugService.log(
       module: 'PROJETO_PROVIDER',
@@ -218,6 +268,7 @@ class ProjetoProvider extends ChangeNotifier {
     }
   }
 
+  /// Deleta projeto e todos os relacionamentos
   Future<bool> deleteProjeto(String id) async {
     DebugService.log(
       module: 'PROJETO_PROVIDER',
@@ -252,6 +303,50 @@ class ProjetoProvider extends ChangeNotifier {
       );
       notifyListeners();
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ============================================
+  // RECALCULAR TOTAIS (Regras 4, 5, 6)
+  // ============================================
+
+  /// ⭐ REGRA 6: Recalcular todos os totais
+  Future<void> recalcularTotais(String projetoId) async {
+    DebugService.log(
+      module: 'PROJETO_PROVIDER',
+      action: 'RECALCULAR_TOTAIS',
+      data: 'Projeto ID: $projetoId',
+    );
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _projetoService.recalcularTotais(projetoId);
+      
+      if (_selectedProjeto?.id == projetoId) {
+        await loadProjetoCompleto(projetoId);
+      }
+
+      notifyListeners();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'RECALCULAR_TOTAIS',
+        data: 'Totais recalculados para: $projetoId',
+      );
+    } catch (e) {
+      _error = e.toString();
+      DebugService.log(
+        module: 'PROJETO_PROVIDER',
+        action: 'RECALCULAR_TOTAIS',
+        error: e.toString(),
+        isError: true,
+      );
+      notifyListeners();
     } finally {
       _isLoading = false;
       notifyListeners();

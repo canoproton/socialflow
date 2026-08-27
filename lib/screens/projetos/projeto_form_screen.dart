@@ -1,5 +1,5 @@
 /// ============================================
-/// TELA: Formulário de Projeto (com Metas e Etapas)
+/// TELA: Formulário de Projeto (com Metas e Etapas) ⭐ REGRA 2
 /// ============================================
 
 import 'package:flutter/material.dart';
@@ -23,6 +23,7 @@ class ProjetoFormScreen extends StatefulWidget {
 }
 
 class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
+  // ⭐ CONTROLLERS
   final _formKey = GlobalKey<FormState>();
   final _descricaoController = TextEditingController();
   final _processoController = TextEditingController();
@@ -32,7 +33,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
   String _status = ProjetoModel.STATUS_ORCAMENTO;
   bool _isLoading = false;
 
-  // ⭐ METAS DO PROJETO
+  // ⭐ METAS DO PROJETO (Regra 2)
   List<MetaModel> _metas = [];
 
   @override
@@ -49,6 +50,24 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
       _loadProjeto();
     }
   }
+
+  @override
+  void dispose() {
+    DebugService.log(
+      module: 'PROJETO',
+      action: 'DISPOSE',
+      data: 'Dispondo formulário',
+    );
+    _descricaoController.dispose();
+    _processoController.dispose();
+    _dataEntregaController.dispose();
+    _valorEstimadoController.dispose();
+    super.dispose();
+  }
+
+  // ============================================
+  // CARREGAR PROJETO PARA EDIÇÃO
+  // ============================================
 
   Future<void> _loadProjeto() async {
     DebugService.log(
@@ -87,7 +106,11 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     }
   }
 
-  // ⭐ MÉTODOS PARA GERENCIAR METAS
+  // ============================================
+  // GERENCIAR METAS (Regra 2)
+  // ============================================
+
+  /// ⭐ Adiciona uma nova meta vazia
   void _adicionarMeta() {
     DebugService.log(
       module: 'PROJETO',
@@ -104,6 +127,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     });
   }
 
+  /// ⭐ Remove uma meta
   void _removerMeta(int index) {
     DebugService.log(
       module: 'PROJETO',
@@ -115,6 +139,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     });
   }
 
+  /// ⭐ Atualiza dados de uma meta
   void _atualizarMeta(int index, Map<String, dynamic> data) {
     DebugService.log(
       module: 'PROJETO',
@@ -149,6 +174,11 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     });
   }
 
+  // ============================================
+  // GERENCIAR ETAPAS (Regra 2)
+  // ============================================
+
+  /// ⭐ Adiciona uma nova etapa a uma meta
   void _adicionarEtapa(int metaIndex, EtapaModel etapa) {
     DebugService.log(
       module: 'PROJETO',
@@ -162,6 +192,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     });
   }
 
+  /// ⭐ Atualiza dados de uma etapa (Regra 4 - recalcula valor_etapa)
   void _atualizarEtapa(int metaIndex, int etapaIndex, Map<String, dynamic> data) {
     DebugService.log(
       module: 'PROJETO',
@@ -173,7 +204,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
       final etapas = List<EtapaModel>.from(meta.etapas);
       final etapa = etapas[etapaIndex];
       
-      // ⭐ CALCULAR VALOR_ETAPA (Regra 4)
+      // ⭐ REGRA 4: Calcular valor_etapa = valor_unitario * quantidade
       final valorUnitario = data['valorUnitario'] ?? etapa.valorUnitario ?? 0;
       final quantidade = data['quantidade'] ?? etapa.quantidade ?? 0;
       final valorEtapa = (valorUnitario as double) * (quantidade as double);
@@ -190,6 +221,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     });
   }
 
+  /// ⭐ Remove uma etapa
   void _removerEtapa(int metaIndex, int etapaIndex) {
     DebugService.log(
       module: 'PROJETO',
@@ -203,7 +235,11 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     });
   }
 
-  // ⭐ SALVAR PROJETO COMPLETO
+  // ============================================
+  // SALVAR PROJETO (Regras 2, 4, 5, 6)
+  // ============================================
+
+  /// ⭐ Salva o projeto completo com metas e etapas
   Future<void> _salvar() async {
     DebugService.log(
       module: 'PROJETO',
@@ -211,6 +247,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
       data: 'Iniciando salvamento | isEditing: ${widget.projetoId != null} | Metas: ${_metas.length}',
     );
     
+    // Validar formulário
     if (!_formKey.currentState!.validate()) {
       DebugService.log(
         module: 'PROJETO',
@@ -221,7 +258,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
       return;
     }
 
-    // ⭐ VALIDAR METAS E ETAPAS
+    // ⭐ REGRA 2: Validar metas e etapas
     if (_metas.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -247,6 +284,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // ⭐ Montar payload com metas e etapas
       final data = {
         'descricao': _descricaoController.text,
         'processo': _processoController.text.isNotEmpty ? _processoController.text : null,
@@ -278,16 +316,18 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
       DebugService.log(
         module: 'PROJETO',
         action: 'SALVAR',
-        data: 'Dados: $data',
+        data: 'Dados: ${data.keys}',
       );
 
       final provider = context.read<ProjetoProvider>();
       bool success;
 
       if (widget.projetoId != null) {
+        // ⭐ EDIÇÃO: Atualizar projeto (TODO: implementar updateCompleto)
         success = await provider.updateProjeto(widget.projetoId!, data);
       } else {
-        success = await provider.createProjeto(data);
+        // ⭐ CRIAÇÃO: Usar createCompleto
+        success = await provider.createProjetoCompleto(data);
       }
 
       if (success && mounted) {
@@ -318,6 +358,10 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
+  // ============================================
+  // WIDGET BUILD
+  // ============================================
 
   @override
   Widget build(BuildContext context) {
@@ -361,15 +405,15 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ⭐ DADOS DO PROJETO
+                    // ⭐ SEÇÃO: DADOS DO PROJETO
                     _buildProjetoSection(),
                     const SizedBox(height: 16),
 
-                    // ⭐ METAS DO PROJETO
+                    // ⭐ SEÇÃO: METAS E ETAPAS (Regra 2)
                     _buildMetasSection(),
                     const SizedBox(height: 24),
 
-                    // ⭐ BOTÕES
+                    // ⭐ SEÇÃO: BOTÕES
                     _buildActionButtons(),
                   ],
                 ),
@@ -377,6 +421,10 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
             ),
     );
   }
+
+  // ============================================
+  // SEÇÃO: DADOS DO PROJETO
+  // ============================================
 
   Widget _buildProjetoSection() {
     return Card(
@@ -402,6 +450,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
             const Divider(),
             const SizedBox(height: 16),
 
+            // Descrição
             TextFormField(
               controller: _descricaoController,
               decoration: const InputDecoration(
@@ -417,6 +466,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
             ),
             const SizedBox(height: 16),
 
+            // Processo
             TextFormField(
               controller: _processoController,
               decoration: const InputDecoration(
@@ -427,6 +477,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
             ),
             const SizedBox(height: 16),
 
+            // Status + Data Entrega
             Row(
               children: [
                 Expanded(
@@ -462,6 +513,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
             ),
             const SizedBox(height: 16),
 
+            // Valor Estimado
             TextFormField(
               controller: _valorEstimadoController,
               decoration: const InputDecoration(
@@ -476,6 +528,10 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
       ),
     );
   }
+
+  // ============================================
+  // SEÇÃO: METAS E ETAPAS (Regra 2)
+  // ============================================
 
   Widget _buildMetasSection() {
     return Card(
@@ -545,6 +601,10 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     );
   }
 
+  // ============================================
+  // SEÇÃO: BOTÕES
+  // ============================================
+
   Widget _buildActionButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -566,6 +626,10 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     );
   }
 
+  // ============================================
+  // AUXILIARES
+  // ============================================
+
   Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -575,6 +639,11 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
     );
     if (picked != null) {
       controller.text = picked.toIso8601String().split('T').first;
+      DebugService.log(
+        module: 'PROJETO',
+        action: 'DATA_ENTREGA',
+        data: 'Data selecionada: ${controller.text}',
+      );
     }
   }
 }

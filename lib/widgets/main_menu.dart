@@ -11,7 +11,6 @@ class MainMenu extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          // Header
           DrawerHeader(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -43,18 +42,8 @@ class MainMenu extends StatelessWidget {
               ],
             ),
           ),
-
-          // Dashboard
-          _buildMenuItem(
-            context,
-            icon: Icons.dashboard,
-            label: 'Dashboard',
-            route: '/',
-          ),
-
+          _buildMenuItem(context, Icons.dashboard, 'Dashboard', '/'),
           const Divider(),
-
-          // MÓDULOS
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
@@ -67,99 +56,42 @@ class MainMenu extends StatelessWidget {
               ),
             ),
           ),
-
-          // ⭐ 1. USUÁRIOS
-          _buildMenuItem(
-            context,
-            icon: Icons.people,
-            label: 'Usuários',
-            route: '/usuarios',
-            isDisabled: true,
-          ),
-
-          // ⭐ 2. PROJETOS
-          _buildMenuItem(
-            context,
-            icon: Icons.folder,
-            label: 'Projetos',
-            route: '/projetos',
-          ),
-
-          // ⭐ 3. TAREFAS
-          _buildMenuItem(
-            context,
-            icon: Icons.checklist,
-            label: 'Tarefas',
-            route: '/tarefas',
-            isDisabled: true,
-          ),
-
-          // ⭐ 4. OPERACIONAL - AGORA APONTA PARA /operacional (ÍNDICE)
-          _buildMenuItem(
-            context,
-            icon: Icons.business_center,
-            label: 'Operacional',
-            route: '/operacional',  // ← MUDOU AQUI!
-          ),
-
-          // ⭐ 5. CONTABILIDADE
-          _buildMenuItem(
-            context,
-            icon: Icons.account_balance,
-            label: 'Contabilidade',
-            route: '/contabilidade',
-            isDisabled: true,
-          ),
-
-          // ⭐ 6. FINANCEIRO
-          _buildMenuItem(
-            context,
-            icon: Icons.attach_money,
-            label: 'Financeiro',
-            route: '/financeiro',
-            isDisabled: true,
-          ),
-
-          // ⭐ 7. DOCUMENTOS
-          _buildMenuItem(
-            context,
-            icon: Icons.folder_open,
-            label: 'Documentos',
-            route: '/documentos',
-            isDisabled: true,
-          ),
-
-          // ⭐ 8. IA
-          _buildMenuItem(
-            context,
-            icon: Icons.settings_overscan,
-            label: 'IA',
-            route: '/ia',
-            isDisabled: true,
-          ),
-
+          _buildMenuItem(context, Icons.people, 'Usuários', '/usuarios', true),
+          _buildMenuItem(context, Icons.folder, 'Projetos', '/projetos'),
+          _buildMenuItem(context, Icons.checklist, 'Tarefas', '/tarefas', true),
+          
+          // ⭐ OPERACIONAL - SUBMENU
+          _buildSubmenuItem(context),
+          
+          _buildMenuItem(context, Icons.account_balance, 'Contabilidade', '/contabilidade', true),
+          _buildMenuItem(context, Icons.attach_money, 'Financeiro', '/financeiro', true),
+          _buildMenuItem(context, Icons.folder_open, 'Documentos', '/documentos', true),
+          _buildMenuItem(context, Icons.settings_overscan, 'IA', '/ia', true),
           const Divider(),
-
-          // Configurações
-          _buildMenuItem(
-            context,
-            icon: Icons.settings,
-            label: 'Configurações',
-            route: '/configuracoes',
-            isDisabled: true,
-          ),
+          _buildMenuItem(context, Icons.settings, 'Configurações', '/configuracoes', true),
         ],
       ),
     );
   }
 
+  Widget _buildSubmenuItem(BuildContext context) {
+    return ExpansionTile(
+      leading: Icon(Icons.business_center, color: AppTheme.primaryColor),
+      title: const Text('Operacional'),
+      children: [
+        _buildMenuItem(context, Icons.business, 'Empresas', '/operacional/empresas'),
+        _buildMenuItem(context, Icons.people, 'Contatos', '/operacional/contatos'),
+      ],
+    );
+  }
+
   Widget _buildMenuItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String route,
+    BuildContext context,
+    IconData icon,
+    String label,
+    String route, [
     bool isDisabled = false,
-  }) {
+  ]) {
     final isActive = !isDisabled &&
         (GoRouterState.of(context).uri.path == route ||
             (route != '/' &&
@@ -182,12 +114,7 @@ class MainMenu extends StatelessWidget {
         ),
       ),
       tileColor: isActive ? AppTheme.primaryColor.withOpacity(0.08) : null,
-      onTap: isDisabled
-          ? null
-          : () {
-              context.go(route);
-              Navigator.pop(context);
-            },
+      onTap: isDisabled ? null : () => context.go(route),
     );
   }
 }

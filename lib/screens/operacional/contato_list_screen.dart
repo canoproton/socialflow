@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/operacional/contato_provider.dart';
-import '../../models/operacional/contato_model.dart';
 import '../../theme/app_theme.dart';
 
 class ContatoListScreen extends StatefulWidget {
@@ -27,10 +26,36 @@ class _ContatoListScreenState extends State<ContatoListScreen> {
     });
   }
 
-  void _goBack() {
-    if (mounted) {
-      context.go('/operacional');
-    }
+  void _confirmDeleteContato(BuildContext context, String id, String nome) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar exclusão'),
+        content: Text('Deseja realmente excluir o contato "$nome"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final provider = context.read<ContatoProvider>();
+              final success = await provider.deleteContato(id);
+              if (success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Contato excluído com sucesso!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -42,8 +67,8 @@ class _ContatoListScreenState extends State<ContatoListScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: _goBack,
-          tooltip: 'Voltar para o Módulo Operacional',
+          onPressed: () => context.go('/'),
+          tooltip: 'Voltar para o Dashboard',
         ),
         actions: [
           IconButton(
@@ -141,6 +166,11 @@ class _ContatoListScreenState extends State<ContatoListScreen> {
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         onPressed: () => context.go('/operacional/contato/${contato.id}'),
                         tooltip: 'Editar',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _confirmDeleteContato(context, contato.id, contato.nome),
+                        tooltip: 'Excluir',
                       ),
                     ],
                   ),

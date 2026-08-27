@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/operacional/empresa_provider.dart';
-import '../../models/operacional/empresa_model.dart';
 import '../../theme/app_theme.dart';
 
 class EmpresaListScreen extends StatefulWidget {
@@ -21,14 +20,42 @@ class _EmpresaListScreenState extends State<EmpresaListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<EmpresaProvider>().loadEmpresas();
+      if (mounted) {
+        context.read<EmpresaProvider>().loadEmpresas();
+      }
     });
   }
 
-  void _goBack() {
-    if (mounted) {
-      context.go('/');
-    }
+  void _confirmDeleteEmpresa(BuildContext context, String id, String nome) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar exclusão'),
+        content: Text('Deseja realmente excluir a empresa "$nome"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final provider = context.read<EmpresaProvider>();
+              final success = await provider.deleteEmpresa(id);
+              if (success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Empresa excluída com sucesso!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -40,7 +67,7 @@ class _EmpresaListScreenState extends State<EmpresaListScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: _goBack,
+          onPressed: () => context.go('/'),
           tooltip: 'Voltar para o Dashboard',
         ),
         actions: [
@@ -139,6 +166,11 @@ class _EmpresaListScreenState extends State<EmpresaListScreen> {
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         onPressed: () => context.go('/operacional/empresa/${empresa.id}'),
                         tooltip: 'Editar',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _confirmDeleteEmpresa(context, empresa.id, empresa.nome),
+                        tooltip: 'Excluir',
                       ),
                     ],
                   ),

@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 // ⭐ OPERACIONAL
-import '../screens/operacional/operacional_index_screen.dart';
-import '../screens/operacional/contato_list_screen.dart';
-import '../screens/operacional/contato_unified_screen.dart';
 import '../screens/operacional/empresa_list_screen.dart';
 import '../screens/operacional/empresa_unified_screen.dart';
+import '../screens/operacional/contato_list_screen.dart';
+import '../screens/operacional/contato_unified_screen.dart';
 
 // ⭐ PROJETOS
 import '../screens/projetos/projeto_list_screen.dart';
@@ -20,9 +19,7 @@ import '../screens/home/home_screen.dart';
 final GoRouter appRouter = GoRouter(
   initialLocation: '/login',
   routes: [
-    // ==========================================
-    // ROTA DE LOGIN
-    // ==========================================
+    // Login
     GoRoute(
       path: '/login',
       name: 'login',
@@ -31,9 +28,7 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
 
-    // ==========================================
-    // ROTA HOME (DASHBOARD)
-    // ==========================================
+    // Home
     GoRoute(
       path: '/',
       name: 'home',
@@ -42,46 +37,7 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
 
-    // ==========================================
-    // ⭐ MÓDULO OPERACIONAL
-    // ==========================================
-
-    // Índice do Operacional
-    GoRoute(
-      path: '/operacional',
-      name: 'operacional',
-      pageBuilder: (context, state) => const MaterialPage(
-        child: OperacionalIndexScreen(),
-      ),
-    ),
-
-    // ⭐ CONTATOS (CORRIGIDO)
-    GoRoute(
-      path: '/operacional/contatos',
-      name: 'contatos',
-      pageBuilder: (context, state) => const MaterialPage(
-        child: ContatoListScreen(),
-      ),
-    ),
-    GoRoute(
-      path: '/operacional/contato/novo',
-      name: 'novo-contato',
-      pageBuilder: (context, state) => const MaterialPage(
-        child: ContatoUnifiedScreen(),
-      ),
-    ),
-    GoRoute(
-      path: '/operacional/contato/:id',
-      name: 'editar-contato',
-      pageBuilder: (context, state) {
-        final id = state.pathParameters['id']!;
-        return MaterialPage(
-          child: ContatoUnifiedScreen(contatoId: id),
-        );
-      },
-    ),
-
-    // ⭐ EMPRESAS
+    // ⭐ OPERACIONAL - EMPRESAS
     GoRoute(
       path: '/operacional/empresas',
       name: 'empresas',
@@ -107,9 +63,33 @@ final GoRouter appRouter = GoRouter(
       },
     ),
 
-    // ==========================================
-    // ⭐ MÓDULO PROJETOS
-    // ==========================================
+    // ⭐ OPERACIONAL - CONTATOS
+    GoRoute(
+      path: '/operacional/contatos',
+      name: 'contatos',
+      pageBuilder: (context, state) => const MaterialPage(
+        child: ContatoListScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/operacional/contato/novo',
+      name: 'novo-contato',
+      pageBuilder: (context, state) => const MaterialPage(
+        child: ContatoUnifiedScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/operacional/contato/:id',
+      name: 'editar-contato',
+      pageBuilder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return MaterialPage(
+          child: ContatoUnifiedScreen(contatoId: id),
+        );
+      },
+    ),
+
+    // ⭐ PROJETOS
     GoRoute(
       path: '/projetos',
       name: 'projetos',

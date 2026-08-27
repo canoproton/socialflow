@@ -37,7 +37,6 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
   bool _isEditing = false;
   bool _isLoading = false;
 
-  // ⭐ RELACIONAMENTOS
   List<ContatoModel> _contatosVinculados = [];
   List<TelefoneModel> _telefones = [];
   List<EmailModel> _emails = [];
@@ -121,22 +120,44 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
       };
 
       final provider = context.read<EmpresaProvider>();
-      bool success;
 
       if (_isEditing) {
-        success = await provider.updateEmpresa(widget.empresaId!, data);
+        final success = await provider.updateEmpresa(widget.empresaId!, data);
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Empresa atualizada!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          await _loadEmpresaData();
+        }
       } else {
-        success = await provider.createEmpresa(data);
-      }
-
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isEditing ? 'Empresa atualizada!' : 'Empresa criada!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        context.go('/operacional/empresas');
+        // ⭐ CRIA EMPRESA
+        final novaEmpresa = await provider.createEmpresa(data);
+        
+        if (novaEmpresa != null && mounted) {
+          // ⭐ RECARREGAR A LISTA DE EMPRESAS
+          await provider.loadEmpresas();
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Empresa criada com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          
+          // ⭐ VOLTA PARA LISTA DE EMPRESAS (onde a empresa vai aparecer)
+          context.go('/operacional/empresas');
+        } else {
+          // ⭐ SE FALHOU, MOSTRA ERRO
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao criar empresa: ${provider.error}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -154,6 +175,9 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ⭐ DETERMINA SE PODE VINCULAR CONTATOS (SE É EDIÇÃO OU JÁ FOI SALVO)
+    final podeVincular = _isEditing || widget.empresaId != null;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Editar Empresa' : 'Nova Empresa'),
@@ -315,28 +339,51 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
                     const SizedBox(height: 16),
 
                     // ============================================
-                    // ⭐ CONTATOS VINCULADOS
+                    // ⭐ CONTATOS VINCULADOS (SÓ APARECE SE FOR EDIÇÃO)
                     // ============================================
-                    ContatosVinculadosWidget(
-                      contatos: _contatosVinculados,
-                      empresaId: widget.empresaId,
-                      onContatoVinculado: (contato) {
-                        setState(() {
-                          _contatosVinculados.add(contato);
-                        });
-                      },
-                      onContatoDesvinculado: (contatoId) {
-                        setState(() {
-                          _contatosVinculados
-                              .removeWhere((c) => c.id == contatoId);
-                        });
-                      },
-                      onContatoCriado: (contato) {
-                        setState(() {
-                          _contatosVinculados.add(contato);
-                        });
-                      },
-                    ),
+                    if (podeVincular)
+                      ContatosVinculadosWidget(
+                        contatos: _contatosVinculados,
+                        empresaId: widget.empresaId,
+                        onContatoVinculado: (contato) {
+                          setState(() {
+                            _contatosVinculados.add(contato);
+                          });
+                        },
+                        onContatoDesvinculado: (contatoId) {
+                          setState(() {
+                            _contatosVinculados
+                                .removeWhere((c) => c.id == contatoId);
+                          });
+                        },
+                        onContatoCriado: (contato) {
+                          setState(() {
+                            _contatosVinculados.add(contato);
+                          });
+                        },
+                      ),
+                    
+                    if (!podeVincular)
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline, color: Colors.orange),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Salve a empresa para poder vincular contatos',
+                                  style: TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 16),
 
                     // ============================================

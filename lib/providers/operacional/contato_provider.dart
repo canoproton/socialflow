@@ -23,6 +23,10 @@ class ContatoProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  // ============================================
+  // LISTAR CONTATOS
+  // ============================================
+
   Future<void> loadContatos() async {
     _isLoading = true;
     _error = null;
@@ -31,6 +35,7 @@ class ContatoProvider extends ChangeNotifier {
     try {
       _contatos = await _service.list();
 
+      // Carregar relacionamentos de cada contato
       for (var i = 0; i < _contatos.length; i++) {
         final telefones = await _service.getTelefones(_contatos[i].id);
         final emails = await _service.getEmails(_contatos[i].id);
@@ -46,11 +51,16 @@ class ContatoProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = e.toString();
+      print('Erro ao carregar contatos: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
+
+  // ============================================
+  // CARREGAR CONTATO POR ID
+  // ============================================
 
   Future<void> loadContatoById(String id) async {
     _isLoading = true;
@@ -74,11 +84,16 @@ class ContatoProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = e.toString();
+      print('Erro ao carregar contato: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
+
+  // ============================================
+  // CRIAR CONTATO
+  // ============================================
 
   Future<bool> createContato(Map<String, dynamic> data) async {
     _isLoading = true;
@@ -86,13 +101,32 @@ class ContatoProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Extrair relacionamentos
+      final telefonesData = data.remove('telefones') as List? ?? [];
+      final emailsData = data.remove('emails') as List? ?? [];
+      final enderecosData = data.remove('enderecos') as List? ?? [];
+      final midiasData = data.remove('midias') as List? ?? [];
+
+      // Criar contato
       final contato = await _service.create(data);
-      _contatos.insert(0, contato);
+      
+      // Adicionar relacionamentos usando o método genérico
+      await _salvarRelacionamentos(contato.id, {
+        'telefones': telefonesData,
+        'emails': emailsData,
+        'enderecos': enderecosData,
+        'midias': midiasData,
+      });
+
+      // Recarregar lista
+      await loadContatos();
+      
       _selectedContato = contato;
       notifyListeners();
       return true;
     } catch (e) {
       _error = e.toString();
+      print('Erro ao criar contato: $e');
       notifyListeners();
       return false;
     } finally {
@@ -100,6 +134,10 @@ class ContatoProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // ============================================
+  // ATUALIZAR CONTATO
+  // ============================================
 
   Future<bool> updateContato(String id, Map<String, dynamic> data) async {
     _isLoading = true;
@@ -107,21 +145,32 @@ class ContatoProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Extrair relacionamentos
+      final telefonesData = data.remove('telefones') as List? ?? [];
+      final emailsData = data.remove('emails') as List? ?? [];
+      final enderecosData = data.remove('enderecos') as List? ?? [];
+      final midiasData = data.remove('midias') as List? ?? [];
+
+      // Atualizar contato
       final contato = await _service.update(id, data);
+      
+      // Atualizar relacionamentos
+      await _salvarRelacionamentos(id, {
+        'telefones': telefonesData,
+        'emails': emailsData,
+        'enderecos': enderecosData,
+        'midias': midiasData,
+      });
 
-      final index = _contatos.indexWhere((c) => c.id == id);
-      if (index != -1) {
-        _contatos[index] = contato;
-      }
-
-      if (_selectedContato?.id == id) {
-        _selectedContato = contato;
-      }
-
+      // Recarregar lista
+      await loadContatos();
+      
+      _selectedContato = contato;
       notifyListeners();
       return true;
     } catch (e) {
       _error = e.toString();
+      print('Erro ao atualizar contato: $e');
       notifyListeners();
       return false;
     } finally {
@@ -129,6 +178,59 @@ class ContatoProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // ============================================
+  // SALVAR RELACIONAMENTOS (GENÉRICO)
+  // ============================================
+
+  Future<void> _salvarRelacionamentos(String contatoId, Map<String, dynamic> dados) async {
+    try {
+      final telefones = dados['telefones'] as List? ?? [];
+      final emails = dados['emails'] as List? ?? [];
+      final enderecos = dados['enderecos'] as List? ?? [];
+      final midias = dados['midias'] as List? ?? [];
+
+      // Telefones
+      if (telefones.isNotEmpty) {
+        // Limpar existentes
+        await _service.limparRelacionamentos(contatoId, 'telefone');
+        // Adicionar novos
+        for (var telefone in telefones) {
+          await _service.adicionarRelacionamento(contatoId, 'telefone', telefone);
+        }
+      }
+
+      // Emails
+      if (emails.isNotEmpty) {
+        await _service.limparRelacionamentos(contatoId, 'email');
+        for (var email in emails) {
+          await _service.adicionarRelacionamento(contatoId, 'email', email);
+        }
+      }
+
+      // Endereços
+      if (enderecos.isNotEmpty) {
+        await _service.limparRelacionamentos(contatoId, 'endereco');
+        for (var endereco in enderecos) {
+          await _service.adicionarRelacionamento(contatoId, 'endereco', endereco);
+        }
+      }
+
+      // Mídias
+      if (midias.isNotEmpty) {
+        await _service.limparRelacionamentos(contatoId, 'midias');
+        for (var midia in midias) {
+          await _service.adicionarRelacionamento(contatoId, 'midias', midia);
+        }
+      }
+    } catch (e) {
+      print('Erro ao salvar relacionamentos: $e');
+    }
+  }
+
+  // ============================================
+  // DELETAR CONTATO
+  // ============================================
 
   Future<bool> deleteContato(String id) async {
     _isLoading = true;
@@ -137,7 +239,7 @@ class ContatoProvider extends ChangeNotifier {
 
     try {
       await _service.delete(id);
-      _contatos.removeWhere((c) => c.id == id);
+      await loadContatos();
       if (_selectedContato?.id == id) {
         _selectedContato = null;
       }
@@ -145,6 +247,7 @@ class ContatoProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _error = e.toString();
+      print('Erro ao deletar contato: $e');
       notifyListeners();
       return false;
     } finally {
@@ -152,6 +255,10 @@ class ContatoProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // ============================================
+  // UTILITÁRIOS
+  // ============================================
 
   void clearError() {
     _error = null;
@@ -161,5 +268,9 @@ class ContatoProvider extends ChangeNotifier {
   void clearSelected() {
     _selectedContato = null;
     notifyListeners();
+  }
+
+  void refresh() {
+    loadContatos();
   }
 }

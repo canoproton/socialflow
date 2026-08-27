@@ -24,6 +24,10 @@ class EmpresaProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  // ============================================
+  // LISTAR EMPRESAS
+  // ============================================
+
   Future<void> loadEmpresas() async {
     _isLoading = true;
     _error = null;
@@ -58,6 +62,10 @@ class EmpresaProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // ============================================
+  // CARREGAR EMPRESA POR ID
+  // ============================================
 
   Future<void> loadEmpresaById(String id) async {
     _isLoading = true;
@@ -97,7 +105,11 @@ class EmpresaProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> createEmpresa(Map<String, dynamic> data) async {
+  // ============================================
+  // CRIAR EMPRESA
+  // ============================================
+
+  Future<EmpresaModel?> createEmpresa(Map<String, dynamic> data) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -107,16 +119,20 @@ class EmpresaProvider extends ChangeNotifier {
       _empresas.insert(0, empresa);
       _selectedEmpresa = empresa;
       notifyListeners();
-      return true;
+      return empresa;  // ⭐ RETORNA EmpresaModel
     } catch (e) {
       _error = e.toString();
       notifyListeners();
-      return false;
+      return null;  // ⭐ RETORNA NULL EM CASO DE ERRO
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
+
+  // ============================================
+  // ATUALIZAR EMPRESA
+  // ============================================
 
   Future<bool> updateEmpresa(String id, Map<String, dynamic> data) async {
     _isLoading = true;
@@ -147,6 +163,10 @@ class EmpresaProvider extends ChangeNotifier {
     }
   }
 
+  // ============================================
+  // DELETAR EMPRESA
+  // ============================================
+
   Future<bool> deleteEmpresa(String id) async {
     _isLoading = true;
     _error = null;
@@ -170,7 +190,15 @@ class EmpresaProvider extends ChangeNotifier {
     }
   }
 
+  // ============================================
+  // VINCULAR CONTATO
+  // ============================================
+
   Future<bool> vincularContato(String empresaId, String contatoId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
     try {
       await _service.vincularContato(empresaId, contatoId);
       await loadEmpresaById(empresaId);
@@ -179,10 +207,21 @@ class EmpresaProvider extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
+  // ============================================
+  // DESVINCULAR CONTATO
+  // ============================================
+
   Future<bool> desvincularContato(String empresaId, String contatoId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
     try {
       await _service.desvincularContato(empresaId, contatoId);
       await loadEmpresaById(empresaId);
@@ -191,8 +230,15 @@ class EmpresaProvider extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
+
+  // ============================================
+  // UTILITÁRIOS
+  // ============================================
 
   void clearError() {
     _error = null;

@@ -12,6 +12,10 @@ import '../../models/operacional/midias_model.dart';
 class ContatoService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  // ============================================
+  // CRUD PRINCIPAL
+  // ============================================
+
   Future<List<ContatoModel>> list() async {
     try {
       final response = await _supabase
@@ -23,7 +27,8 @@ class ContatoService {
           .map((item) => ContatoModel.fromJson(item))
           .toList();
     } catch (e) {
-      throw Exception('Erro ao listar contatos: $e');
+      print('Erro ao listar contatos: $e');
+      return [];
     }
   }
 
@@ -38,7 +43,8 @@ class ContatoService {
       if (response == null) return null;
       return ContatoModel.fromJson(response);
     } catch (e) {
-      throw Exception('Erro ao buscar contato: $e');
+      print('Erro ao buscar contato: $e');
+      return null;
     }
   }
 
@@ -83,7 +89,36 @@ class ContatoService {
   }
 
   // ============================================
-  // RELACIONAMENTOS
+  // RELACIONAMENTOS (GENERICOS)
+  // ============================================
+
+  Future<void> adicionarRelacionamento(String contatoId, String tabela, Map<String, dynamic> data) async {
+    try {
+      final dados = {
+        'contato_id': contatoId,
+        ...data,
+      };
+      await _supabase
+          .from(tabela)
+          .insert(dados);
+    } catch (e) {
+      print('Erro ao adicionar relacionamento: $e');
+    }
+  }
+
+  Future<void> limparRelacionamentos(String contatoId, String tabela) async {
+    try {
+      await _supabase
+          .from(tabela)
+          .delete()
+          .eq('contato_id', contatoId);
+    } catch (e) {
+      print('Erro ao limpar relacionamentos: $e');
+    }
+  }
+
+  // ============================================
+  // BUSCAR RELACIONAMENTOS
   // ============================================
 
   Future<List<TelefoneModel>> getTelefones(String contatoId) async {

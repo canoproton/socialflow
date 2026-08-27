@@ -117,11 +117,14 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
 
       final provider = context.read<ContatoProvider>();
       bool success;
+      ContatoModel? contatoCriado;
 
       if (_isEditing) {
         success = await provider.updateContato(widget.contatoId!, data);
+        contatoCriado = provider.selectedContato;
       } else {
         success = await provider.createContato(data);
+        contatoCriado = provider.selectedContato;
       }
 
       if (success && mounted) {
@@ -131,7 +134,8 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        context.go('/operacional/contatos');
+        // ⭐ VOLTA PARA QUEM CHAMOU (empresa ou lista de contatos)
+        Navigator.pop(context, contatoCriado);
       }
     } catch (e) {
       if (mounted) {
@@ -156,8 +160,8 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/operacional/contatos'),
-          tooltip: 'Voltar para lista de contatos',
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'Voltar',
         ),
         actions: [
           IconButton(
@@ -175,7 +179,9 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // Dados do Contato
+                    // ============================================
+                    // DADOS DO CONTATO
+                    // ============================================
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -303,7 +309,9 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Telefones
+                    // ============================================
+                    // TELEFONES
+                    // ============================================
                     TelefoneListWidget(
                       telefones: _telefones,
                       onChanged: (novaLista) {
@@ -314,7 +322,9 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Emails
+                    // ============================================
+                    // EMAILS
+                    // ============================================
                     EmailListWidget(
                       emails: _emails,
                       onChanged: (novaLista) {
@@ -325,7 +335,9 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Endereços
+                    // ============================================
+                    // ENDEREÇOS
+                    // ============================================
                     EnderecoListWidget(
                       enderecos: _enderecos,
                       onChanged: (novaLista) {
@@ -336,7 +348,9 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Mídias
+                    // ============================================
+                    // MÍDIAS SOCIAIS
+                    // ============================================
                     MidiasListWidget(
                       midias: _midias,
                       onChanged: (novaLista) {
@@ -347,12 +361,14 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Botões
+                    // ============================================
+                    // BOTÕES
+                    // ============================================
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         OutlinedButton(
-                          onPressed: () => context.go('/operacional/contatos'),
+                          onPressed: () => Navigator.pop(context),
                           child: const Text('Cancelar'),
                         ),
                         const SizedBox(width: 12),

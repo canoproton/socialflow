@@ -95,7 +95,7 @@ class ContatoProvider extends ChangeNotifier {
   // CRIAR CONTATO
   // ============================================
 
-  Future<bool> createContato(Map<String, dynamic> data) async {
+  Future<ContatoModel?> createContato(Map<String, dynamic> data) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -107,28 +107,41 @@ class ContatoProvider extends ChangeNotifier {
       final enderecosData = data.remove('enderecos') as List? ?? [];
       final midiasData = data.remove('midias') as List? ?? [];
 
-      // Criar contato
+      // ⭐ CRIAR CONTATO E PEGAR O ID
       final contato = await _service.create(data);
       
-      // Adicionar relacionamentos usando o método genérico
-      await _salvarRelacionamentos(contato.id, {
-        'telefones': telefonesData,
-        'emails': emailsData,
-        'enderecos': enderecosData,
-        'midias': midiasData,
-      });
+      // ⭐ VERIFICAR SE O ID FOI GERADO
+      if (contato.id.isEmpty) {
+        throw Exception('Contato criado sem ID válido');
+      }
 
-      // Recarregar lista
+      final contatoId = contato.id;
+      
+      // Adicionar relacionamentos
+      for (var telefone in telefonesData) {
+        await _service.adicionarRelacionamento(contatoId, 'telefone', telefone);
+      }
+      for (var email in emailsData) {
+        await _service.adicionarRelacionamento(contatoId, 'email', email);
+      }
+      for (var endereco in enderecosData) {
+        await _service.adicionarRelacionamento(contatoId, 'endereco', endereco);
+      }
+      for (var midia in midiasData) {
+        await _service.adicionarRelacionamento(contatoId, 'midias', midia);
+      }
+
       await loadContatos();
       
       _selectedContato = contato;
       notifyListeners();
-      return true;
+      
+      return contato;
     } catch (e) {
       _error = e.toString();
       print('Erro ao criar contato: $e');
       notifyListeners();
-      return false;
+      return null;
     } finally {
       _isLoading = false;
       notifyListeners();

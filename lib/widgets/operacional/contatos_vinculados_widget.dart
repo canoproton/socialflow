@@ -10,6 +10,7 @@ import '../../providers/operacional/empresa_provider.dart';
 import '../../models/operacional/contato_model.dart';
 import '../../theme/app_theme.dart';
 import '../../screens/operacional/contato_unified_screen.dart';
+import '../../services/debug_service.dart';
 
 class ContatosVinculadosWidget extends StatefulWidget {
   final List<ContatoModel> contatos;
@@ -35,7 +36,6 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
   bool _isLoading = false;
   String _searchQuery = '';
 
-  // ⭐ VERIFICA SE PODE VINCULAR (TEM empresaId)
   bool get _podeVincular => widget.empresaId != null && widget.empresaId!.isNotEmpty;
 
   // ============================================
@@ -53,7 +53,6 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
       return;
     }
 
-    // Carregar lista de contatos disponíveis
     final contatoProvider = context.read<ContatoProvider>();
     await contatoProvider.loadContatos();
 
@@ -71,7 +70,6 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
       return;
     }
 
-    // Mostrar modal para selecionar contato
     final contatoSelecionado = await _showContatoSelectionModal(contatosDisponiveis);
 
     if (contatoSelecionado != null && mounted) {
@@ -121,7 +119,6 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
       return;
     }
 
-    // Navegar para tela de criação de contato
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -132,7 +129,29 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
       ),
     );
 
+    DebugService.log(
+      module: 'CONTATOS_VINCULADOS',
+      action: 'RESULTADO_CONTATO',
+      data: 'result: $result | is ContatoModel: ${result is ContatoModel}',
+    );
+
     if (result != null && result is ContatoModel && mounted) {
+      DebugService.log(
+        module: 'CONTATOS_VINCULADOS',
+        action: 'ID_CONTATO',
+        data: 'contato.id: ${result.id} | contato.nome: ${result.nome}',
+      );
+
+      if (result.id.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erro: Contato criado sem ID válido'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       setState(() => _isLoading = true);
 
       try {
@@ -160,6 +179,15 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
         );
       } finally {
         if (mounted) setState(() => _isLoading = false);
+      }
+    } else {
+      if (mounted) {
+        DebugService.log(
+          module: 'CONTATOS_VINCULADOS',
+          action: 'CRIAR_CONTATO',
+          data: 'Usuário cancelou a criação do contato',
+          isWarning: true,
+        );
       }
     }
   }
@@ -243,7 +271,6 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -261,8 +288,6 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
                     ],
                   ),
                   const Divider(),
-                  
-                  // Search
                   TextField(
                     decoration: InputDecoration(
                       hintText: 'Buscar contato...',
@@ -286,8 +311,6 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
                     },
                   ),
                   const SizedBox(height: 12),
-
-                  // Lista
                   Expanded(
                     child: ListView.builder(
                       itemCount: filtered.length,
@@ -326,6 +349,12 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
 
   @override
   Widget build(BuildContext context) {
+    DebugService.log(
+      module: 'CONTATOS_VINCULADOS',
+      action: 'BUILD',
+      data: 'empresaId: ${widget.empresaId} | contatos: ${widget.contatos.length} | _podeVincular: $_podeVincular',
+    );
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -348,7 +377,6 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
                     ),
                   ],
                 ),
-                // ⭐ SÓ MOSTRA OS BOTÕES SE TIVER empresaId
                 if (_podeVincular)
                   Row(
                     children: [
@@ -403,6 +431,26 @@ class _ContatosVinculadosWidgetState extends State<ContatosVinculadosWidget> {
                   tooltip: 'Desvincular',
                 ),
               )),
+            if (!_podeVincular && widget.contatos.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.orange, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '💡 Salve a empresa para poder vincular contatos',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

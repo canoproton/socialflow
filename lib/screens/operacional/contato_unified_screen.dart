@@ -12,6 +12,7 @@ import '../../widgets/operacional/email_list_widget.dart';
 import '../../widgets/operacional/endereco_list_widget.dart';
 import '../../widgets/operacional/midias_list_widget.dart';
 import '../../theme/app_theme.dart';
+import '../../services/debug_service.dart';
 
 class ContatoUnifiedScreen extends StatefulWidget {
   final String? contatoId;
@@ -42,6 +43,12 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
   @override
   void initState() {
     super.initState();
+    DebugService.module('CONTATO UNIFIED SCREEN');
+    DebugService.log(
+      module: 'CONTATO',
+      action: 'INIT',
+      data: 'contatoId: ${widget.contatoId} | isEditing: ${widget.contatoId != null}',
+    );
     _isEditing = widget.contatoId != null;
     if (_isEditing) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -116,26 +123,35 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
       };
 
       final provider = context.read<ContatoProvider>();
-      bool success;
       ContatoModel? contatoCriado;
 
       if (_isEditing) {
-        success = await provider.updateContato(widget.contatoId!, data);
-        contatoCriado = provider.selectedContato;
+        final success = await provider.updateContato(widget.contatoId!, data);
+        if (success) {
+          contatoCriado = provider.selectedContato;
+        }
       } else {
-        success = await provider.createContato(data);
-        contatoCriado = provider.selectedContato;
+        // ⭐ CHAMAR O PROVIDER E PEGAR O CONTATO CRIADO
+        contatoCriado = await provider.createContato(data);
       }
 
-      if (success && mounted) {
+      if (contatoCriado != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_isEditing ? 'Contato atualizado!' : 'Contato criado!'),
             backgroundColor: Colors.green,
           ),
         );
-        // ⭐ VOLTA PARA QUEM CHAMOU (empresa ou lista de contatos)
+        
+        // ⭐ RETORNAR O CONTATO CRIADO PARA QUEM CHAMOU
         Navigator.pop(context, contatoCriado);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(provider.error ?? 'Erro ao criar contato'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -160,8 +176,8 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),  // ⭐ VOLTA PARA QUEM CHAMOU
-          tooltip: 'Voltar',
+          onPressed: () => context.go('/operacional/contatos'),  // ⭐ VOLTA PARA LISTA
+          tooltip: 'Voltar para lista de contatos',
         ),
         actions: [
           IconButton(
@@ -179,9 +195,7 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // ============================================
                     // DADOS DO CONTATO
-                    // ============================================
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -309,9 +323,7 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ============================================
-                    // TELEFONES
-                    // ============================================
+                    // Telefones
                     TelefoneListWidget(
                       telefones: _telefones,
                       onChanged: (novaLista) {
@@ -322,9 +334,7 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ============================================
-                    // EMAILS
-                    // ============================================
+                    // Emails
                     EmailListWidget(
                       emails: _emails,
                       onChanged: (novaLista) {
@@ -335,9 +345,7 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ============================================
-                    // ENDEREÇOS
-                    // ============================================
+                    // Endereços
                     EnderecoListWidget(
                       enderecos: _enderecos,
                       onChanged: (novaLista) {
@@ -348,9 +356,7 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ============================================
-                    // MÍDIAS SOCIAIS
-                    // ============================================
+                    // Mídias
                     MidiasListWidget(
                       midias: _midias,
                       onChanged: (novaLista) {
@@ -361,14 +367,12 @@ class _ContatoUnifiedScreenState extends State<ContatoUnifiedScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // ============================================
-                    // BOTÕES
-                    // ============================================
+                    // Botões
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () => context.go('/operacional/contatos'),
                           child: const Text('Cancelar'),
                         ),
                         const SizedBox(width: 12),

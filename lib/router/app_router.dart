@@ -15,6 +15,7 @@ import '../screens/projetos/projeto_detail_screen.dart';
 // ⭐ GERAIS
 import '../screens/auth/login_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../services/debug_service.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/login',
@@ -55,7 +56,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/operacional/empresa/:id',
       name: 'editar-empresa',
-      pageBuilder: (context, state) {
+      pageBuilder: (context, state) {        
+        DebugService.navigation(
+          '${state.matchedLocation}',
+          '${state.name}',
+          params: state.pathParameters,
+       );
         final id = state.pathParameters['id']!;
         return MaterialPage(
           child: EmpresaUnifiedScreen(empresaId: id),
@@ -82,6 +88,11 @@ final GoRouter appRouter = GoRouter(
       path: '/operacional/contato/:id',
       name: 'editar-contato',
       pageBuilder: (context, state) {
+        DebugService.navigation(
+          '${state.matchedLocation}',
+          '${state.name}',
+          params: state.pathParameters,
+        );
         final id = state.pathParameters['id']!;
         return MaterialPage(
           child: ContatoUnifiedScreen(contatoId: id),
@@ -108,6 +119,11 @@ final GoRouter appRouter = GoRouter(
           path: 'editar/:id',
           name: 'editar-projeto',
           pageBuilder: (context, state) {
+            DebugService.navigation(
+              '${state.matchedLocation}',
+              '${state.name}',
+              params: state.pathParameters,
+            );          
             final id = state.pathParameters['id']!;
             return MaterialPage(
               child: ProjetoFormScreen(projetoId: id),
@@ -118,6 +134,11 @@ final GoRouter appRouter = GoRouter(
           path: ':id',
           name: 'detalhe-projeto',
           pageBuilder: (context, state) {
+            DebugService.navigation(
+              '${state.matchedLocation}',
+              '${state.name}',
+              params: state.pathParameters,
+            );
             final id = state.pathParameters['id']!;
             return MaterialPage(
               child: ProjetoDetailScreen(projetoId: id),

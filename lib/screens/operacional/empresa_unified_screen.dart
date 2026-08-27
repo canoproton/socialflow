@@ -3,6 +3,7 @@
 /// ============================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/operacional/empresa_provider.dart';
@@ -14,6 +15,8 @@ import '../../widgets/operacional/endereco_list_widget.dart';
 import '../../widgets/operacional/midias_list_widget.dart';
 import '../../widgets/operacional/contatos_vinculados_widget.dart';
 import '../../theme/app_theme.dart';
+import '../../services/debug_service.dart';
+import '../../utils/formatters/formatters.dart';
 
 class EmpresaUnifiedScreen extends StatefulWidget {
   final String? empresaId;
@@ -43,12 +46,17 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
   List<EnderecoModel> _enderecos = [];
   List<MidiasModel> _midias = [];
 
-  // ⭐ ARMAZENA O ID DA EMPRESA APÓS SALVAR
   String? _empresaIdSalva;
 
   @override
   void initState() {
     super.initState();
+    DebugService.module('EMPRESA UNIFIED SCREEN');
+    DebugService.log(
+      module: 'EMPRESA',
+      action: 'INIT',
+      data: 'empresaId: ${widget.empresaId} | isEditing: ${widget.empresaId != null}',
+    );
     _isEditing = widget.empresaId != null;
     if (_isEditing) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -68,6 +76,11 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
   }
 
   Future<void> _loadEmpresaData() async {
+    DebugService.log(
+      module: 'EMPRESA',
+      action: 'LOAD',
+      data: 'Carregando empresa ID: ${widget.empresaId}',
+    );
     if (!mounted) return;
     setState(() => _isLoading = true);
 
@@ -108,19 +121,27 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
   }
 
   Future<void> _salvar() async {
+    DebugService.log(
+      module: 'EMPRESA',
+      action: 'SALVAR',
+      data: 'Iniciando salvamento | isEditing: $_isEditing',
+    );
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
+      String cnpjLimpo = _cnpjController.text.replaceAll(RegExp(r'\D'), '');
+      final cnpjParaEnviar = cnpjLimpo.isNotEmpty ? cnpjLimpo : null;
+
       final data = {
         'nome': _nomeController.text,
         'razao_social': _razaoController.text,
         'qualif': _qualif,
         'tipo_contr': _tipoContr,
-        'cnpj': _cnpjController.text,
-        'ie': _ieController.text,
-        'obs': _obsController.text,
+        'cnpj': cnpjParaEnviar,
+        'ie': _ieController.text.isNotEmpty ? _ieController.text : null,
+        'obs': _obsController.text.isNotEmpty ? _obsController.text : null,
       };
 
       final provider = context.read<EmpresaProvider>();
@@ -137,13 +158,10 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
           await _loadEmpresaData();
         }
       } else {
-        // ⭐ CRIA EMPRESA
         final novaEmpresa = await provider.createEmpresa(data);
         
         if (novaEmpresa != null && mounted) {
           _empresaIdSalva = novaEmpresa.id;
-          
-          // ⭐ RECARREGA A LISTA DE EMPRESAS
           await provider.loadEmpresas();
           
           ScaffoldMessenger.of(context).showSnackBar(
@@ -153,7 +171,6 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
             ),
           );
           
-          // ⭐ VAI PARA EDIÇÃO DA EMPRESA CRIADA (para vincular contatos)
           context.go('/operacional/empresa/${novaEmpresa.id}');
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -166,12 +183,21 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (e.toString().contains('duplicate key value')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('CNPJ já cadastrado! Verifique o número informado.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -180,7 +206,11 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ⭐ USA O ID SALVO OU O ID DO WIDGET
+    DebugService.log(
+      module: 'EMPRESA',
+      action: 'BUILD',
+      data: 'empresaId: ${widget.empresaId} | _empresaIdSalva: $_empresaIdSalva | contatos: ${_contatosVinculados.length}',
+    );
     final idParaVincular = _empresaIdSalva ?? widget.empresaId;
 
     return Scaffold(
@@ -247,7 +277,43 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
                                     decoration: const InputDecoration(
                                       labelText: 'CNPJ',
                                       border: OutlineInputBorder(),
+                                      hintText: '00.000.000/0000-00',
                                     ),
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      CnpjFormatter(),
+                                    ],
+                                    onChanged: (value) {
+                                      DebugService.log(
+                                        module: 'CNPJ',
+                                        action: 'DIGITANDO',
+                                        data: 'CNPJ: $value',
+                                      );
+                                      final clean = value.replaceAll(RegExp(r'\D'), '');
+                                      if (clean.length > 14) return;
+                                      
+                                      String formatted = clean;
+                                      if (clean.length > 2) {
+                                        formatted = '${clean.substring(0,2)}.${clean.substring(2)}';
+                                      }
+                                      if (clean.length > 5) {
+                                        formatted = '${formatted.substring(0,6)}.${formatted.substring(6)}';
+                                      }
+                                      if (clean.length > 8) {
+                                        formatted = '${formatted.substring(0,10)}/${formatted.substring(10)}';
+                                      }
+                                      if (clean.length > 12) {
+                                        formatted = '${formatted.substring(0,15)}-${formatted.substring(15)}';
+                                      }
+                                      
+                                      if (_cnpjController.text != formatted) {
+                                        _cnpjController.value = TextEditingValue(
+                                          text: formatted,
+                                          selection: TextSelection.collapsed(offset: formatted.length),
+                                        );
+                                      }
+                                    },
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -344,12 +410,11 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
                     const SizedBox(height: 16),
 
                     // ============================================
-                    // ⭐ CONTATOS VINCULADOS - SEMPRE VISÍVEL
-                    // ⭐ SE NÃO TIVER ID, MOSTRA MENSAGEM "SALVE PARA VINCULAR"
+                    // CONTATOS VINCULADOS
                     // ============================================
                     ContatosVinculadosWidget(
                       contatos: _contatosVinculados,
-                      empresaId: idParaVincular,
+                      empresaId: _empresaIdSalva ?? widget.empresaId,
                       onContatoVinculado: (contato) {
                         setState(() {
                           _contatosVinculados.add(contato);
@@ -369,7 +434,7 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
                     const SizedBox(height: 16),
 
                     // ============================================
-                    // ⭐ TELEFONES
+                    // TELEFONES
                     // ============================================
                     TelefoneListWidget(
                       telefones: _telefones,
@@ -382,7 +447,7 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
                     const SizedBox(height: 16),
 
                     // ============================================
-                    // ⭐ EMAILS
+                    // EMAILS
                     // ============================================
                     EmailListWidget(
                       emails: _emails,
@@ -395,7 +460,7 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
                     const SizedBox(height: 16),
 
                     // ============================================
-                    // ⭐ ENDEREÇOS
+                    // ENDEREÇOS
                     // ============================================
                     EnderecoListWidget(
                       enderecos: _enderecos,
@@ -408,7 +473,7 @@ class _EmpresaUnifiedScreenState extends State<EmpresaUnifiedScreen> {
                     const SizedBox(height: 16),
 
                     // ============================================
-                    // ⭐ MÍDIAS SOCIAIS
+                    // MÍDIAS SOCIAIS
                     // ============================================
                     MidiasListWidget(
                       midias: _midias,

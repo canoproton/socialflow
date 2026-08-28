@@ -60,16 +60,16 @@ class _ProjetoListScreenState extends State<ProjetoListScreen> {
       }
     });
   }
-
   void _aplicarFiltros() {
-    print('📋 [PROJETO_LIST] APLICAR_FILTROS - '
-        'Search: ${_searchController.text}, '
-        'Status: $_statusFilter');
+    print('📋 [PROJETO_LIST] APLICAR_FILTROS - Search: ${_searchController.text}, Status: $_statusFilter');
 
-    // ⭐ CHAMAR SEM PARÂMETROS
-    context.read<ProjetoProvider>().loadProjetos();
+    final provider = context.read<ProjetoProvider>();
+    
+    provider.loadProjetos(
+      search: _searchController.text.isNotEmpty ? _searchController.text : null,
+      status: _statusFilter.isNotEmpty ? _statusFilter : null,
+    );
   }
-
   // ============================================
   // MÉTODO: LIMPAR FILTROS
   // ============================================

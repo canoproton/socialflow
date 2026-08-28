@@ -25,27 +25,41 @@ class ProjetoProvider extends ChangeNotifier {
   // ============================================
   // LISTAR PROJETOS (SEM FILTROS)
   // ============================================
+Future<void> loadProjetos({
+  String? search,
+  String? status,
+}) async {
+  print('📋 [PROJETO_PROVIDER] LOAD_PROJETOS - Filtros: search=$search, status=$status');
 
-  Future<void> loadProjetos() async {
-    print('📋 [PROJETO_PROVIDER] LOAD_PROJETOS - Carregando projetos');
+  _isLoading = true;
+  _error = null;
+  notifyListeners();
 
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      _projetos = await _projetoService.list();
-      print('✅ [PROJETO_PROVIDER] LOAD_PROJETOS - Carregados ${_projetos.length} projetos');
-    } catch (e) {
-      _error = e.toString();
-      print('❌ [PROJETO_PROVIDER] LOAD_PROJETOS - Erro: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+  try {
+    // ⭐ CARREGAR TODOS OS PROJETOS
+    _projetos = await _projetoService.list();
+    
+    // ⭐ APLICAR FILTROS NO LADO DO CLIENTE (FLUTTER)
+    if (search != null && search.isNotEmpty) {
+      _projetos = _projetos.where((p) =>
+        p.descricao?.toLowerCase().contains(search.toLowerCase()) ?? false
+      ).toList();
     }
+    
+    if (status != null && status.isNotEmpty) {
+      _projetos = _projetos.where((p) => p.statusProjeto == status).toList();
+    }
+    
+    print('✅ [PROJETO_PROVIDER] LOAD_PROJETOS - Carregados ${_projetos.length} projetos após filtros');
+  } catch (e) {
+    _error = e.toString();
+    print('❌ [PROJETO_PROVIDER] LOAD_PROJETOS - Erro: $e');
+  } finally {
+    _isLoading = false;
+    notifyListeners();
   }
-
-  // ============================================
+}  
+// ============================================
   // CARREGAR PROJETO POR ID
   // ============================================
 

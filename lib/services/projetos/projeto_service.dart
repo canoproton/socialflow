@@ -11,7 +11,7 @@ class ProjetoService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   // ============================================
-  // LISTAR PROJETOS (VERSÃO SIMPLIFICADA - SEM FILTROS)
+  // LISTAR TODOS OS PROJETOS (SEM FILTROS)
   // ============================================
 
   Future<List<ProjetoModel>> list() async {

@@ -1,5 +1,5 @@
 /// ============================================
-/// TELA: Detalhes do Projeto (Layout Profissional)
+/// TELA: Detalhes do Projeto (Layout Profissional com Todos os Relacionamentos)
 /// ============================================
 
 import 'package:flutter/material.dart';
@@ -22,6 +22,10 @@ class ProjetoDetailScreen extends StatefulWidget {
 }
 
 class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
+  bool _showRecursos = true;
+  bool _showContraPartida = true;
+  bool _showDocumentos = true;
+
   @override
   void initState() {
     super.initState();
@@ -42,39 +46,25 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'ORÇAMENTO':
-        return Colors.orange;
-      case 'EMITIDO':
-        return Colors.blue;
-      case 'APROVADO':
-        return Colors.green;
-      case 'INDEFERIDO':
-        return Colors.red;
-      case 'EXECUTANDO':
-        return Colors.purple;
-      case 'FINALIZADO':
-        return Colors.grey;
-      default:
-        return Colors.grey;
+      case 'ORÇAMENTO': return Colors.orange;
+      case 'EMITIDO': return Colors.blue;
+      case 'APROVADO': return Colors.green;
+      case 'INDEFERIDO': return Colors.red;
+      case 'EXECUTANDO': return Colors.purple;
+      case 'FINALIZADO': return Colors.grey;
+      default: return Colors.grey;
     }
   }
 
   Color _getEtapaStatusColor(String status) {
     switch (status) {
-      case 'PLANEJADA':
-        return Colors.grey;
-      case 'ACIONADO':
-        return Colors.orange;
-      case 'EXECUÇÃO':
-        return Colors.blue;
-      case 'PENDENTE':
-        return Colors.purple;
-      case 'CONCLUIDA':
-        return Colors.green;
-      case 'CANCELADA':
-        return Colors.red;
-      default:
-        return Colors.grey;
+      case 'PLANEJADA': return Colors.grey;
+      case 'ACIONADO': return Colors.orange;
+      case 'EXECUÇÃO': return Colors.blue;
+      case 'PENDENTE': return Colors.purple;
+      case 'CONCLUIDA': return Colors.green;
+      case 'CANCELADA': return Colors.red;
+      default: return Colors.grey;
     }
   }
 
@@ -99,11 +89,8 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: () {
-              // TODO: Implementar PDF (Regra 14)
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Funcionalidade de PDF em desenvolvimento'),
-                ),
+                const SnackBar(content: Text('Funcionalidade de PDF em desenvolvimento')),
               );
             },
             tooltip: 'Exportar PDF',
@@ -145,9 +132,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
 
           final projeto = provider.selectedProjeto;
           if (projeto == null) {
-            return const Center(
-              child: Text('Projeto não encontrado'),
-            );
+            return const Center(child: Text('Projeto não encontrado'));
           }
 
           return SingleChildScrollView(
@@ -155,23 +140,16 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ⭐ HEADER DO PROJETO
                 _buildHeader(projeto),
                 const SizedBox(height: 16),
-
-                // ⭐ RESUMO FINANCEIRO
                 _buildFinancialSummary(projeto),
                 const SizedBox(height: 16),
-
-                // ⭐ INFORMAÇÕES ADICIONAIS
                 _buildAdditionalInfo(projeto),
                 const SizedBox(height: 16),
-
-                // ⭐ METAS E ETAPAS
+                _buildRelacionamentos(projeto),
+                const SizedBox(height: 16),
                 _buildMetasSection(projeto),
                 const SizedBox(height: 16),
-
-                // ⭐ BOTÕES DE AÇÃO
                 _buildActionButtons(projeto),
               ],
             ),
@@ -188,9 +166,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   Widget _buildHeader(ProjetoModel projeto) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -202,10 +178,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
                 Expanded(
                   child: Text(
                     projeto.descricao ?? 'Projeto sem título',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Container(
@@ -213,10 +186,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
                   decoration: BoxDecoration(
                     color: _getStatusColor(projeto.statusProjeto).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _getStatusColor(projeto.statusProjeto),
-                      width: 1,
-                    ),
+                    border: Border.all(color: _getStatusColor(projeto.statusProjeto), width: 1),
                   ),
                   child: Text(
                     projeto.statusLabel,
@@ -237,10 +207,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
                   const SizedBox(width: 8),
                   Text(
                     'Processo: ${projeto.processo}',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                   ),
                 ],
               ),
@@ -249,25 +216,46 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
               children: [
                 Icon(Icons.calendar_today, size: 16, color: AppTheme.textSecondary),
                 const SizedBox(width: 8),
-                Text(
-                  'Entrega: ${_formatDate(projeto.dataEntrega)}',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
-                ),
+                Text('Entrega: ${_formatDate(projeto.dataEntrega)}',
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
                 const SizedBox(width: 24),
                 Icon(Icons.check_circle, size: 16, color: AppTheme.textSecondary),
                 const SizedBox(width: 8),
+                Text('Aprovação: ${_formatDate(projeto.dataAprovacao)}',
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.person, size: 16, color: AppTheme.textSecondary),
+                const SizedBox(width: 8),
                 Text(
-                  'Aprovação: ${_formatDate(projeto.dataAprovacao)}',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
+                  'Gerente: ${projeto.gerenteProjetoId ?? 'Não definido'}',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                ),
+                const SizedBox(width: 24),
+                Icon(Icons.business, size: 16, color: AppTheme.textSecondary),
+                const SizedBox(width: 8),
+                Text(
+                  'Proponente: ${projeto.proponenteId ?? 'Não definido'}',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                 ),
               ],
             ),
+            if (projeto.contaId != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.account_balance, size: 16, color: AppTheme.textSecondary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Conta: ${projeto.contaId}',
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -281,9 +269,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   Widget _buildFinancialSummary(ProjetoModel projeto) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -291,10 +277,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
           children: [
             const Text(
               'Resumo Financeiro',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
             const SizedBox(height: 8),
@@ -335,6 +318,19 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildFinanceItem(
+                    'Total Aportado',
+                    _formatCurrency(projeto.valorTotalAportado),
+                    Colors.purple,
+                  ),
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
           ],
         ),
       ),
@@ -354,20 +350,12 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: AppTheme.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
           ),
         ],
       ),
@@ -381,9 +369,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   Widget _buildAdditionalInfo(ProjetoModel projeto) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -391,41 +377,40 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
           children: [
             const Text(
               'Informações Adicionais',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInfoItem(
-                    'Gerente',
-                    projeto.gerenteProjetoId ?? 'Não definido',
-                    Icons.person,
-                  ),
-                ),
-                Expanded(
-                  child: _buildInfoItem(
-                    'Proponente',
-                    projeto.proponenteId ?? 'Não definido',
-                    Icons.business,
-                  ),
-                ),
-              ],
+            _buildInfoItem(
+              'Gerente do Projeto',
+              projeto.gerenteProjetoId ?? 'Não definido',
+              Icons.person,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
+            _buildInfoItem(
+              'Proponente',
+              projeto.proponenteId ?? 'Não definido',
+              Icons.business,
+            ),
+            const SizedBox(height: 4),
+            _buildInfoItem(
+              'Conta Corrente',
+              projeto.contaId ?? 'Não definida',
+              Icons.account_balance,
+            ),
+            const SizedBox(height: 4),
             if (projeto.obs != null && projeto.obs!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: _buildInfoItem(
-                  'Observações',
-                  projeto.obs!,
-                  Icons.comment,
-                  isLongText: true,
-                ),
+              _buildInfoItem(
+                'Observações',
+                projeto.obs!,
+                Icons.comment,
+                isLongText: true,
+              ),
+            if (projeto.atualizadoPor != null)
+              _buildInfoItem(
+                'Atualizado por',
+                projeto.atualizadoPor!,
+                Icons.person_outline,
               ),
           ],
         ),
@@ -435,7 +420,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
 
   Widget _buildInfoItem(String label, String value, IconData icon, {bool isLongText = false}) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -471,15 +456,184 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   }
 
   // ============================================
+  // RELACIONAMENTOS
+  // ============================================
+
+  Widget _buildRelacionamentos(ProjetoModel projeto) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Recursos e Documentos',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Divider(),
+            const SizedBox(height: 8),
+
+            // RECURSOS
+            _buildExpandableSection(
+              title: 'Fontes de Recursos',
+              icon: Icons.attach_money,
+              iconColor: Colors.green,
+              isExpanded: _showRecursos,
+              onToggle: () => setState(() => _showRecursos = !_showRecursos),
+              child: projeto.recursos != null && projeto.recursos!.isNotEmpty
+                  ? Column(
+                      children: projeto.recursos!.map((recurso) => 
+                        _buildRecursoItem(recurso)
+                      ).toList(),
+                    )
+                  : const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text('Nenhum recurso vinculado', style: TextStyle(color: Colors.grey)),
+                    ),
+            ),
+            const SizedBox(height: 8),
+
+            // CONTRA PARTIDA
+            _buildExpandableSection(
+              title: 'Contra Partida',
+              icon: Icons.swap_horiz,
+              iconColor: Colors.orange,
+              isExpanded: _showContraPartida,
+              onToggle: () => setState(() => _showContraPartida = !_showContraPartida),
+              child: projeto.contraPartida != null && projeto.contraPartida!.isNotEmpty
+                  ? Column(
+                      children: projeto.contraPartida!.map((item) => 
+                        _buildContraPartidaItem(item)
+                      ).toList(),
+                    )
+                  : const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text('Nenhuma contra partida vinculada', style: TextStyle(color: Colors.grey)),
+                    ),
+            ),
+            const SizedBox(height: 8),
+
+            // DOCUMENTOS
+            _buildExpandableSection(
+              title: 'Documentos',
+              icon: Icons.folder,
+              iconColor: Colors.blue,
+              isExpanded: _showDocumentos,
+              onToggle: () => setState(() => _showDocumentos = !_showDocumentos),
+              child: projeto.docsAnexo != null && projeto.docsAnexo!.isNotEmpty
+                  ? Column(
+                      children: projeto.docsAnexo!.map((doc) => 
+                        _buildDocumentoItem(doc)
+                      ).toList(),
+                    )
+                  : const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text('Nenhum documento anexado', style: TextStyle(color: Colors.grey)),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpandableSection({
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required bool isExpanded,
+    required VoidCallback onToggle,
+    required Widget child,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            leading: Icon(icon, color: iconColor),
+            title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+            trailing: Icon(isExpanded ? Icons.expand_less : Icons.expand_more, color: AppTheme.textSecondary),
+            onTap: onToggle,
+          ),
+          if (isExpanded) Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecursoItem(String recurso) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.attach_money, size: 16, color: Colors.green),
+          const SizedBox(width: 8),
+          Expanded(child: Text(recurso)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContraPartidaItem(String item) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.swap_horiz, size: 16, color: Colors.orange),
+          const SizedBox(width: 8),
+          Expanded(child: Text(item)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentoItem(String doc) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.insert_drive_file, size: 16, color: Colors.blue),
+          const SizedBox(width: 8),
+          Expanded(child: Text(doc)),
+        ],
+      ),
+    );
+  }
+
+  // ============================================
   // METAS E ETAPAS
   // ============================================
 
   Widget _buildMetasSection(ProjetoModel projeto) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -490,10 +644,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
               children: [
                 const Text(
                   'Metas e Etapas',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -513,15 +664,11 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
               ],
             ),
             const Divider(),
-            const SizedBox(height: 8),
             if (projeto.metas.isEmpty)
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(32),
-                  child: Text(
-                    'Nenhuma meta cadastrada',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  child: Text('Nenhuma meta cadastrada', style: TextStyle(color: Colors.grey)),
                 ),
               )
             else
@@ -549,7 +696,6 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cabeçalho da Meta
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -578,10 +724,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
                       Expanded(
                         child: Text(
                           meta.descricao ?? 'Meta sem descrição',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -590,18 +733,13 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
                 Chip(
                   label: Text(
                     'R\$ ${meta.vlMetaAprov?.toStringAsFixed(2) ?? '0,00'}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                   backgroundColor: Colors.green.withOpacity(0.15),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-
-            // Indicadores da Meta
             Wrap(
               spacing: 8,
               runSpacing: 4,
@@ -616,11 +754,11 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
                   _buildTag('📍 ${meta.local}', Colors.orange),
                 if (meta.prova != null && meta.prova!.isNotEmpty)
                   _buildTag('📄 ${meta.prova}', Colors.cyan),
+                if (meta.supervisorId != null)
+                  _buildTag('👤 Supervisor: ${meta.supervisorId}', Colors.pink),
               ],
             ),
             const SizedBox(height: 12),
-
-            // Etapas da Meta
             if (meta.etapas.isNotEmpty) ...[
               Container(
                 padding: const EdgeInsets.all(12),
@@ -637,11 +775,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
                       children: [
                         Text(
                           'Etapas (${meta.etapas.length})',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue),
                         ),
                         Text(
                           'Total: R\$ ${meta.valorTotalEtapas?.toStringAsFixed(2) ?? '0,00'}',
@@ -674,11 +808,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
       ),
       child: Text(
         text,
-        style: TextStyle(
-          fontSize: 11,
-          color: color,
-          fontWeight: FontWeight.w500,
-        ),
+        style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -686,74 +816,99 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   Widget _buildEtapaItem(EtapaModel etapa) {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 4,
-            height: 32,
-            decoration: BoxDecoration(
-              color: _getEtapaStatusColor(etapa.status),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  etapa.descricao ?? 'Etapa sem descrição',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: _getEtapaStatusColor(etapa.status),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const SizedBox(height: 2),
-                Row(
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'R\$ ${etapa.valorEtapa?.toStringAsFixed(2) ?? '0,00'}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.green[700],
-                        fontWeight: FontWeight.w600,
-                      ),
+                      etapa.descricao ?? 'Etapa sem descrição',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                     ),
-                    const SizedBox(width: 12),
-                    if (etapa.dataInicio != null && etapa.dataVencimento != null)
-                      Text(
-                        '${_formatDate(etapa.dataInicio)} → ${_formatDate(etapa.dataVencimento)}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textSecondary,
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(
+                          'R\$ ${etapa.valorEtapa?.toStringAsFixed(2) ?? '0,00'}',
+                          style: TextStyle(fontSize: 12, color: Colors.green[700], fontWeight: FontWeight.w600),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        if (etapa.dataInicio != null && etapa.dataVencimento != null)
+                          Text(
+                            '${_formatDate(etapa.dataInicio)} → ${_formatDate(etapa.dataVencimento)}',
+                            style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getEtapaStatusColor(etapa.status).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  etapa.statusLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _getEtapaStatusColor(etapa.status),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: _getEtapaStatusColor(etapa.status).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              etapa.statusLabel,
-              style: TextStyle(
-                fontSize: 11,
-                color: _getEtapaStatusColor(etapa.status),
-                fontWeight: FontWeight.w600,
+          if (etapa.rubricaId != null || etapa.executorId != null || etapa.areaId != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 16),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  if (etapa.rubricaId != null) _buildSmallTag('Rubrica: ${etapa.rubricaId}', Colors.purple),
+                  if (etapa.executorId != null) _buildSmallTag('Executor: ${etapa.executorId}', Colors.green),
+                  if (etapa.areaId != null) _buildSmallTag('Área: ${etapa.areaId}', Colors.blue),
+                  if (etapa.unidadeEtapaId != null) _buildSmallTag('Unidade: ${etapa.unidadeEtapaId}', Colors.orange),
+                  if (etapa.unidadePgtoId != null) _buildSmallTag('Unid. Pagto: ${etapa.unidadePgtoId}', Colors.cyan),
+                  if (etapa.lancamentoEtapa != null) _buildSmallTag('Lançamento: ${etapa.lancamentoEtapa}', Colors.red),
+                ],
               ),
             ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSmallTag(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -775,11 +930,8 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
         if (projeto.statusProjeto == ProjetoModel.STATUS_APROVADO)
           ElevatedButton.icon(
             onPressed: () {
-              // TODO: Implementar execução do projeto (Regra 8)
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Executando projeto...'),
-                ),
+                const SnackBar(content: Text('Executando projeto...')),
               );
             },
             icon: const Icon(Icons.play_arrow, size: 18),
@@ -792,11 +944,8 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
         if (projeto.statusProjeto == ProjetoModel.STATUS_EXECUTANDO)
           ElevatedButton.icon(
             onPressed: () {
-              // TODO: Implementar impressão/PDF (Regra 14)
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Gerando PDF...'),
-                ),
+                const SnackBar(content: Text('Gerando PDF...')),
               );
             },
             icon: const Icon(Icons.picture_as_pdf, size: 18),

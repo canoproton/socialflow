@@ -5,18 +5,17 @@
 import 'package:flutter/material.dart';
 import '../../models/projetos/projeto_model.dart';
 import '../../services/projetos/projeto_service.dart';
+import '../../services/projetos/disparo_service.dart';
 
 class ProjetoProvider extends ChangeNotifier {
   final ProjetoService _projetoService = ProjetoService();
 
-  // ⭐ ESTADO
   List<ProjetoModel> _projetos = [];
   ProjetoModel? _selectedProjeto;
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic> _filters = {};
 
-  // ⭐ GETTERS
   List<ProjetoModel> get projetos => _projetos;
   ProjetoModel? get selectedProjeto => _selectedProjeto;
   bool get isLoading => _isLoading;
@@ -24,7 +23,7 @@ class ProjetoProvider extends ChangeNotifier {
   Map<String, dynamic> get filters => _filters;
 
   // ============================================
-  // LISTAR PROJETOS
+  // LISTAR PROJETOS (SEM FILTROS)
   // ============================================
 
   Future<void> loadProjetos() async {
@@ -93,7 +92,7 @@ class ProjetoProvider extends ChangeNotifier {
   }
 
   // ============================================
-  // CRUD - PROJETO (APENAS PROJETO)
+  // CRUD - PROJETO
   // ============================================
 
   Future<bool> createProjeto(Map<String, dynamic> data) async {
@@ -121,10 +120,6 @@ class ProjetoProvider extends ChangeNotifier {
     }
   }
 
-  // ============================================
-  // CRUD - PROJETO COMPLETO (COM METAS E ETAPAS) ⭐ REGRA 2
-  // ============================================
-
   Future<bool> createProjetoCompleto(Map<String, dynamic> data) async {
     print('📋 [PROJETO_PROVIDER] CREATE_PROJETO_COMPLETO - Criando projeto completo');
 
@@ -142,39 +137,6 @@ class ProjetoProvider extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       print('❌ [PROJETO_PROVIDER] CREATE_PROJETO_COMPLETO - Erro: $e');
-      notifyListeners();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<bool> updateProjetoCompleto(String id, Map<String, dynamic> data) async {
-    print('📋 [PROJETO_PROVIDER] UPDATE_PROJETO_COMPLETO - ID: $id');
-
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final projeto = await _projetoService.updateCompleto(id, data);
-
-      final index = _projetos.indexWhere((p) => p.id == id);
-      if (index != -1) {
-        _projetos[index] = projeto;
-      }
-
-      if (_selectedProjeto?.id == id) {
-        _selectedProjeto = projeto;
-      }
-
-      notifyListeners();
-      print('✅ [PROJETO_PROVIDER] UPDATE_PROJETO_COMPLETO - Projeto atualizado: $id com ${projeto.metas.length} metas');
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      print('❌ [PROJETO_PROVIDER] UPDATE_PROJETO_COMPLETO - Erro: $e');
       notifyListeners();
       return false;
     } finally {
@@ -216,6 +178,39 @@ class ProjetoProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateProjetoCompleto(String id, Map<String, dynamic> data) async {
+    print('📋 [PROJETO_PROVIDER] UPDATE_PROJETO_COMPLETO - ID: $id');
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final projeto = await _projetoService.updateCompleto(id, data);
+
+      final index = _projetos.indexWhere((p) => p.id == id);
+      if (index != -1) {
+        _projetos[index] = projeto;
+      }
+
+      if (_selectedProjeto?.id == id) {
+        _selectedProjeto = projeto;
+      }
+
+      notifyListeners();
+      print('✅ [PROJETO_PROVIDER] UPDATE_PROJETO_COMPLETO - Projeto atualizado: $id com ${projeto.metas.length} metas');
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      print('❌ [PROJETO_PROVIDER] UPDATE_PROJETO_COMPLETO - Erro: $e');
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> deleteProjeto(String id) async {
     print('🗑️ [PROJETO_PROVIDER] DELETE_PROJETO - ID: $id');
 
@@ -235,6 +230,77 @@ class ProjetoProvider extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       print('❌ [PROJETO_PROVIDER] DELETE_PROJETO - Erro: $e');
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ============================================
+  // REGRA 8: APROVAR E EXECUTAR PROJETO
+  // ============================================
+
+  Future<bool> aprovarProjeto(String projetoId) async {
+    print('📋 [PROJETO_PROVIDER] APROVAR_PROJETO - Projeto: $projetoId');
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final podeAprovar = await _projetoService.podeAprovar(projetoId);
+      if (!podeAprovar) {
+        throw Exception('Projeto não pode ser aprovado');
+      }
+
+      final projeto = await _projetoService.getCompleto(projetoId);
+
+      final disparoService = DisparoService();
+      await disparoService.dispararTodasEtapas(projeto);
+
+      await loadProjetoCompleto(projetoId);
+
+      notifyListeners();
+      print('✅ [PROJETO_PROVIDER] APROVAR_PROJETO - Projeto aprovado: $projetoId');
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      print('❌ [PROJETO_PROVIDER] APROVAR_PROJETO - Erro: $e');
+      notifyListeners();
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ============================================
+  // REGRA 8: CONCLUIR ETAPA
+  // ============================================
+
+  Future<bool> concluirEtapa(String etapaId) async {
+    print('📋 [PROJETO_PROVIDER] CONCLUIR_ETAPA - Etapa: $etapaId');
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final disparoService = DisparoService();
+      await disparoService.concluirEtapa(etapaId);
+
+      if (_selectedProjeto != null) {
+        await loadProjetoCompleto(_selectedProjeto!.id);
+      }
+
+      notifyListeners();
+      print('✅ [PROJETO_PROVIDER] CONCLUIR_ETAPA - Etapa concluída: $etapaId');
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      print('❌ [PROJETO_PROVIDER] CONCLUIR_ETAPA - Erro: $e');
       notifyListeners();
       return false;
     } finally {

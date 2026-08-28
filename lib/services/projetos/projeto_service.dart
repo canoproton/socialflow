@@ -11,7 +11,7 @@ class ProjetoService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   // ============================================
-  // LISTAR PROJETOS
+  // LISTAR PROJETOS (VERSÃO SIMPLIFICADA - SEM FILTROS)
   // ============================================
 
   Future<List<ProjetoModel>> list() async {
@@ -565,7 +565,6 @@ class ProjetoService {
   // CÁLCULOS AUTOMÁTICOS (Regras 4, 5, 6)
   // ============================================
 
-  /// ⭐ REGRA 4: Recalcular total de etapas da meta
   Future<void> _recalcularTotalMeta(String metaId) async {
     final etapasResponse = await _supabase
         .from('etapas')
@@ -600,7 +599,6 @@ class ProjetoService {
     print('📊 [PROJETO_SERVICE] RECALCULAR_META - Meta $metaId - Total Etapas: $totalEtapas, Saldo: $saldoMeta');
   }
 
-  /// ⭐ REGRA 5: Recalcular totais do projeto
   Future<void> _recalcularTotaisProjeto(String projetoId) async {
     final metasResponse = await _supabase
         .from('meta_projetos')
@@ -631,7 +629,6 @@ class ProjetoService {
     print('📊 [PROJETO_SERVICE] RECALCULAR_PROJETO - Projeto $projetoId - Total Metas: $totalMetas, Saldo: $saldo');
   }
 
-  /// ⭐ REGRA 6: Recalcular todos os totais (chamada pública)
   Future<void> recalcularTotais(String projetoId) async {
     print('📋 [PROJETO_SERVICE] RECALCULAR_TOTAIS - Projeto ID: $projetoId');
     await _recalcularTotaisProjeto(projetoId);

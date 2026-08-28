@@ -779,7 +779,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
                         ),
                         Text(
                           'Total: R\$ ${meta.valorTotalEtapas?.toStringAsFixed(2) ?? '0,00'}',
-                          style: TextStyle(
+                        style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: Colors.green[700],
@@ -914,7 +914,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   }
 
   // ============================================
-  // BOTÕES DE AÇÃO
+  // BOTÕES DE AÇÃO (COM EXECUÇÃO)
   // ============================================
 
   Widget _buildActionButtons(ProjetoModel projeto) {
@@ -927,20 +927,20 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
           label: const Text('Editar'),
         ),
         const SizedBox(width: 12),
+        
+        // ⭐ BOTÃO EXECUTAR (Regra 8) - Só aparece se o status for APROVADO
         if (projeto.statusProjeto == ProjetoModel.STATUS_APROVADO)
           ElevatedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Executando projeto...')),
-              );
-            },
+            onPressed: () => _executarProjeto(context, projeto.id),
             icon: const Icon(Icons.play_arrow, size: 18),
-            label: const Text('Executar'),
+            label: const Text('Executar Projeto'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
             ),
           ),
+        
+        // ⭐ BOTÃO GERAR PDF (Regra 14) - Só aparece se estiver EXECUTANDO
         if (projeto.statusProjeto == ProjetoModel.STATUS_EXECUTANDO)
           ElevatedButton.icon(
             onPressed: () {
@@ -957,5 +957,86 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
           ),
       ],
     );
+  }
+
+  // ============================================
+  // MÉTODO: EXECUTAR PROJETO (Regra 8)
+  // ============================================
+
+  /// ⭐ REGRA 8: Executar projeto (disparar todas as etapas)
+  void _executarProjeto(BuildContext context, String projetoId) async {
+    // ⭐ Confirmar com o usuário
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Executar Projeto'),
+        content: const Text(
+          'Ao executar o projeto, todas as etapas serão disparadas para:\n\n'
+          '📋 Tickets (módulo Tarefas)\n'
+          '💰 ItemLancamento (módulo Financeiro)\n\n'
+          'Deseja continuar?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Executar', style: TextStyle(color: Colors.green)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      // ⭐ Mostrar loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Executando projeto...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      try {
+        final provider = context.read<ProjetoProvider>();
+        final success = await provider.aprovarProjeto(projetoId);
+
+        // ⭐ Fechar loading
+        Navigator.pop(context);
+
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Projeto executado com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // ⭐ Recarregar a tela
+          provider.loadProjetoCompleto(projetoId);
+        }
+      } catch (e) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erro: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

@@ -13,6 +13,7 @@ class ContraPartidaModel {
   final double? valorTotalCp;
   final DateTime? dataEntrega;
   final String status;
+  final String? obs;  // ⭐ CAMPO ADICIONADO
   final String? atualizadoPor;
   final DateTime? atualizadoEm;
   final DateTime? createdAt;
@@ -44,6 +45,7 @@ class ContraPartidaModel {
     this.valorTotalCp,
     this.dataEntrega,
     required this.status,
+    this.obs,
     this.atualizadoPor,
     this.atualizadoEm,
     this.createdAt,
@@ -63,6 +65,7 @@ class ContraPartidaModel {
           ? DateTime.parse(json['dataentrega'].toString())
           : null,
       status: json['status']?.toString() ?? STATUS_PENDENTE,
+      obs: json['obs']?.toString(),
       atualizadoPor: json['atualizado_por']?.toString(),
       atualizadoEm: json['atualizado_em'] != null
           ? DateTime.parse(json['atualizado_em'].toString())
@@ -87,6 +90,7 @@ class ContraPartidaModel {
       'valor_total_cp': valorTotalCp,
       'dataentrega': dataEntrega?.toIso8601String(),
       'status': status,
+      'obs': obs,
       'atualizado_por': atualizadoPor,
       'atualizado_em': atualizadoEm?.toIso8601String(),
     };
@@ -102,6 +106,7 @@ class ContraPartidaModel {
     double? valorTotalCp,
     DateTime? dataEntrega,
     String? status,
+    String? obs,
     String? atualizadoPor,
     DateTime? atualizadoEm,
     DateTime? createdAt,
@@ -117,6 +122,7 @@ class ContraPartidaModel {
       valorTotalCp: valorTotalCp ?? this.valorTotalCp,
       dataEntrega: dataEntrega ?? this.dataEntrega,
       status: status ?? this.status,
+      obs: obs ?? this.obs,
       atualizadoPor: atualizadoPor ?? this.atualizadoPor,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
       createdAt: createdAt ?? this.createdAt,

@@ -184,7 +184,6 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
       _metas[metaIndex] = meta.copyWith(etapas: etapas);
     });
   }
-
   // ============================================
   // SALVAR PROJETO (Regras 2, 4, 5, 6)
   // ============================================
@@ -334,7 +333,10 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
                     // ⭐ SEÇÃO: METAS E ETAPAS (Regra 2)
                     _buildMetasSection(),
                     const SizedBox(height: 24),
-
+                    _buildFontesSection(),
+                    const SizedBox(height: 16),
+                    _buildContraPartidaSection(),
+                    const SizedBox(height: 24),
                     // ⭐ SEÇÃO: BOTÕES
                     _buildActionButtons(),
                   ],
@@ -522,7 +524,124 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
       ),
     );
   }
+// ============================================
+// SEÇÃO: FONTES DE RECURSOS (Regra 7)
+// ============================================
 
+Widget _buildFontesSection() {
+  // TODO: Buscar fontes disponíveis
+  // Por enquanto, mostrar um placeholder
+  return Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.attach_money, color: Colors.green),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Fontes de Recursos',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  // TODO: Abrir modal para selecionar fonte
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Selecionar fonte de recurso'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Vincular Fonte'),
+              ),
+            ],
+          ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(
+              child: Text(
+                'Nenhuma fonte vinculada ao projeto',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// ============================================
+// SEÇÃO: CONTRA PARTIDA (Regra 11)
+// ============================================
+
+Widget _buildContraPartidaSection() {
+  // TODO: Buscar contra partidas do projeto
+  return Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.swap_horiz, color: Colors.orange),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Contra Partida',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  // TODO: Abrir modal para selecionar contra partida
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Selecionar contra partida'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Vincular Contra Partida'),
+              ),
+            ],
+          ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(
+              child: Text(
+                'Nenhuma contra partida vinculada',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
   // ============================================
   // SEÇÃO: BOTÕES
   // ============================================

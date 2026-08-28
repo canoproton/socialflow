@@ -34,5 +34,30 @@ final GoRouter appRouter = GoRouter(
       ),
       routes: [...], // Sub-rotas do projetos
     ),
+    // ⭐ ALOCAÇÕES (Regra 7)
+    GoRoute(
+      path: 'alocacoes',
+      name: 'alocacoes',
+      pageBuilder: (context, state) => const MaterialPage(
+        child: FonteAlocacaoListScreen(),
+      ),
+    ),
+    GoRoute(
+      path: 'alocacao/novo',
+      name: 'nova-alocacao',
+      pageBuilder: (context, state) => const MaterialPage(
+        child: FonteAlocacaoFormScreen(),
+      ),
+    ),
+    GoRoute(
+      path: 'alocacao/editar/:id',
+      name: 'editar-alocacao',
+      pageBuilder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return MaterialPage(
+          child: FonteAlocacaoFormScreen(alocacaoId: id),
+        );
+      },
+    ),
   ],
 );

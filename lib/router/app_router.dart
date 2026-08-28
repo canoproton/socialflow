@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 // ⭐ OPERACIONAL
-import '../screens/operacional/empresa_list_screen.dart';
-import '../screens/operacional/empresa_unified_screen.dart';
+import '../screens/operacional/operacional_index_screen.dart';
 import '../screens/operacional/contato_list_screen.dart';
 import '../screens/operacional/contato_unified_screen.dart';
+import '../screens/operacional/empresa_list_screen.dart';
+import '../screens/operacional/empresa_unified_screen.dart';
 
-// ⭐ IMPORTS DO MÓDULO PROJETOS (completos)
+// ⭐ PROJETOS
 import '../screens/projetos/projeto_list_screen.dart';
 import '../screens/projetos/projeto_form_screen.dart';
 import '../screens/projetos/projeto_detail_screen.dart';
@@ -19,12 +20,13 @@ import '../screens/projetos/contra_partida_form_screen.dart';
 // ⭐ GERAIS
 import '../screens/auth/login_screen.dart';
 import '../screens/home/home_screen.dart';
-import '../services/debug_service.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/login',
   routes: [
-    // Login
+    // ==========================================
+    // ROTA DE LOGIN
+    // ==========================================
     GoRoute(
       path: '/login',
       name: 'login',
@@ -33,7 +35,9 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
 
-    // Home
+    // ==========================================
+    // ROTA HOME (DASHBOARD)
+    // ==========================================
     GoRoute(
       path: '/',
       name: 'home',
@@ -42,38 +46,20 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
 
-    // ⭐ OPERACIONAL - EMPRESAS
+    // ==========================================
+    // ⭐ MÓDULO OPERACIONAL
+    // ==========================================
+
+    // Índice do Operacional
     GoRoute(
-      path: '/operacional/empresas',
-      name: 'empresas',
+      path: '/operacional',
+      name: 'operacional',
       pageBuilder: (context, state) => const MaterialPage(
-        child: EmpresaListScreen(),
+        child: OperacionalIndexScreen(),
       ),
-    ),
-    GoRoute(
-      path: '/operacional/empresa/novo',
-      name: 'nova-empresa',
-      pageBuilder: (context, state) => const MaterialPage(
-        child: EmpresaUnifiedScreen(),
-      ),
-    ),
-    GoRoute(
-      path: '/operacional/empresa/:id',
-      name: 'editar-empresa',
-      pageBuilder: (context, state) {        
-        DebugService.navigation(
-          '${state.matchedLocation}',
-          '${state.name}',
-          params: state.pathParameters,
-       );
-        final id = state.pathParameters['id']!;
-        return MaterialPage(
-          child: EmpresaUnifiedScreen(empresaId: id),
-        );
-      },
     ),
 
-    // ⭐ OPERACIONAL - CONTATOS
+    // CONTATOS
     GoRoute(
       path: '/operacional/contatos',
       name: 'contatos',
@@ -92,11 +78,6 @@ final GoRouter appRouter = GoRouter(
       path: '/operacional/contato/:id',
       name: 'editar-contato',
       pageBuilder: (context, state) {
-        DebugService.navigation(
-          '${state.matchedLocation}',
-          '${state.name}',
-          params: state.pathParameters,
-        );
         final id = state.pathParameters['id']!;
         return MaterialPage(
           child: ContatoUnifiedScreen(contatoId: id),
@@ -104,7 +85,37 @@ final GoRouter appRouter = GoRouter(
       },
     ),
 
-    // ⭐ PROJETOS
+    // EMPRESAS
+    GoRoute(
+      path: '/operacional/empresas',
+      name: 'empresas',
+      pageBuilder: (context, state) => const MaterialPage(
+        child: EmpresaListScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/operacional/empresa/novo',
+      name: 'nova-empresa',
+      pageBuilder: (context, state) => const MaterialPage(
+        child: EmpresaUnifiedScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/operacional/empresa/:id',
+      name: 'editar-empresa',
+      pageBuilder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return MaterialPage(
+          child: EmpresaUnifiedScreen(empresaId: id),
+        );
+      },
+    ),
+
+    // ==========================================
+    // ⭐ MÓDULO PROJETOS
+    // ==========================================
+    
+    // PROJETOS - ROTA PRINCIPAL
     GoRoute(
       path: '/projetos',
       name: 'projetos',
@@ -112,6 +123,65 @@ final GoRouter appRouter = GoRouter(
         child: ProjetoListScreen(),
       ),
       routes: [
+        // ⭐ ROTAS ESPECÍFICAS (DEVEM VIR PRIMEIRO)
+        
+        // FONTES DE RECURSOS (Regra 7)
+        GoRoute(
+          path: 'fontes',
+          name: 'fontes-recursos',
+          pageBuilder: (context, state) => const MaterialPage(
+            child: FontesBaseListScreen(),
+          ),
+          routes: [
+            GoRoute(
+              path: 'novo',
+              name: 'nova-fonte',
+              pageBuilder: (context, state) => const MaterialPage(
+                child: FontesBaseFormScreen(),
+              ),
+            ),
+            GoRoute(
+              path: 'editar/:id',
+              name: 'editar-fonte',
+              pageBuilder: (context, state) {
+                final id = state.pathParameters['id']!;
+                return MaterialPage(
+                  child: FontesBaseFormScreen(fonteId: id),
+                );
+              },
+            ),
+          ],
+        ),
+        
+        // CONTRA PARTIDAS (Regra 11)
+        GoRoute(
+          path: 'contra-partidas',
+          name: 'contra-partidas',
+          pageBuilder: (context, state) => const MaterialPage(
+            child: ContraPartidaListScreen(),
+          ),
+          routes: [
+            GoRoute(
+              path: 'novo',
+              name: 'nova-contra-partida',
+              pageBuilder: (context, state) => const MaterialPage(
+                child: ContraPartidaFormScreen(),
+              ),
+            ),
+            GoRoute(
+              path: 'editar/:id',
+              name: 'editar-contra-partida',
+              pageBuilder: (context, state) {
+                final id = state.pathParameters['id']!;
+                return MaterialPage(
+                  child: ContraPartidaFormScreen(contraPartidaId: id),
+                );
+              },
+            ),
+          ],
+        ),
+        
+        // ⭐ ROTA COM PARÂMETRO (DEVE VIR POR ÚLTIMO)
         GoRoute(
           path: 'novo',
           name: 'novo-projeto',
@@ -123,11 +193,6 @@ final GoRouter appRouter = GoRouter(
           path: 'editar/:id',
           name: 'editar-projeto',
           pageBuilder: (context, state) {
-            DebugService.navigation(
-              '${state.matchedLocation}',
-              '${state.name}',
-              params: state.pathParameters,
-            );          
             final id = state.pathParameters['id']!;
             return MaterialPage(
               child: ProjetoFormScreen(projetoId: id),
@@ -138,68 +203,9 @@ final GoRouter appRouter = GoRouter(
           path: ':id',
           name: 'detalhe-projeto',
           pageBuilder: (context, state) {
-            DebugService.navigation(
-              '${state.matchedLocation}',
-              '${state.name}',
-              params: state.pathParameters,
-            );
             final id = state.pathParameters['id']!;
             return MaterialPage(
               child: ProjetoDetailScreen(projetoId: id),
-            );
-          },
-        ),
-        // ==========================================
-        // FONTES DE RECURSOS (Regra 7)
-        // ==========================================
-        GoRoute(
-          path: '/projetos/fontes',
-          name: 'fontes-recursos',
-          pageBuilder: (context, state) => const MaterialPage(
-            child: FontesBaseListScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/projetos/fontes/novo',
-          name: 'nova-fonte',
-          pageBuilder: (context, state) => const MaterialPage(
-            child: FontesBaseFormScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/projetos/fontes/editar/:id',
-          name: 'editar-fonte',
-          pageBuilder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return MaterialPage(
-              child: FontesBaseFormScreen(fonteId: id),
-            );
-          },
-        ),
-        // ==========================================
-        // CONTRA PARTIDAS (Regra 11)
-        // ==========================================
-        GoRoute(
-          path: '/projetos/contra-partidas',
-          name: 'contra-partidas',
-          pageBuilder: (context, state) => const MaterialPage(
-            child: ContraPartidaListScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/projetos/contra-partida/novo',
-          name: 'nova-contra-partida',
-          pageBuilder: (context, state) => const MaterialPage(
-            child: ContraPartidaFormScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/projetos/contra-partida/editar/:id',
-          name: 'editar-contra-partida',
-          pageBuilder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return MaterialPage(
-              child: ContraPartidaFormScreen(contraPartidaId: id),
             );
           },
         ),

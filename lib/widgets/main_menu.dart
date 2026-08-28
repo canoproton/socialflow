@@ -64,11 +64,18 @@ class MainMenu extends StatelessWidget {
             'Projetos',
             '/projetos',
           ),
+          // FONTES DE RECURSOS (com submenu)
           _buildMenuItem(
             context,
             Icons.attach_money,
             'Fontes de Recursos',
             '/projetos/fontes',
+          ),
+          _buildMenuItem(
+            context,
+            Icons.assignment,
+            'Alocações',
+            '/projetos/fontes/alocacoes',
           ),
           _buildMenuItem(
             context,

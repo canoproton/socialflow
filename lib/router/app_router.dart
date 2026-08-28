@@ -7,10 +7,14 @@ import '../screens/operacional/empresa_unified_screen.dart';
 import '../screens/operacional/contato_list_screen.dart';
 import '../screens/operacional/contato_unified_screen.dart';
 
-// ⭐ PROJETOS
+// ⭐ IMPORTS DO MÓDULO PROJETOS (completos)
 import '../screens/projetos/projeto_list_screen.dart';
 import '../screens/projetos/projeto_form_screen.dart';
 import '../screens/projetos/projeto_detail_screen.dart';
+import '../screens/projetos/fontes_base_list_screen.dart';
+import '../screens/projetos/fontes_base_form_screen.dart';
+import '../screens/projetos/contra_partida_list_screen.dart';
+import '../screens/projetos/contra_partida_form_screen.dart';
 
 // ⭐ GERAIS
 import '../screens/auth/login_screen.dart';
@@ -142,6 +146,60 @@ final GoRouter appRouter = GoRouter(
             final id = state.pathParameters['id']!;
             return MaterialPage(
               child: ProjetoDetailScreen(projetoId: id),
+            );
+          },
+        ),
+        // ==========================================
+        // FONTES DE RECURSOS (Regra 7)
+        // ==========================================
+        GoRoute(
+          path: '/projetos/fontes',
+          name: 'fontes-recursos',
+          pageBuilder: (context, state) => const MaterialPage(
+            child: FontesBaseListScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/projetos/fontes/novo',
+          name: 'nova-fonte',
+          pageBuilder: (context, state) => const MaterialPage(
+            child: FontesBaseFormScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/projetos/fontes/editar/:id',
+          name: 'editar-fonte',
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return MaterialPage(
+              child: FontesBaseFormScreen(fonteId: id),
+            );
+          },
+        ),
+        // ==========================================
+        // CONTRA PARTIDAS (Regra 11)
+        // ==========================================
+        GoRoute(
+          path: '/projetos/contra-partidas',
+          name: 'contra-partidas',
+          pageBuilder: (context, state) => const MaterialPage(
+            child: ContraPartidaListScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/projetos/contra-partida/novo',
+          name: 'nova-contra-partida',
+          pageBuilder: (context, state) => const MaterialPage(
+            child: ContraPartidaFormScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/projetos/contra-partida/editar/:id',
+          name: 'editar-contra-partida',
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return MaterialPage(
+              child: ContraPartidaFormScreen(contraPartidaId: id),
             );
           },
         ),

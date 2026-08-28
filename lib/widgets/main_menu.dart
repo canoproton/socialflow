@@ -57,7 +57,25 @@ class MainMenu extends StatelessWidget {
             ),
           ),
           _buildMenuItem(context, Icons.people, 'Usuários', '/usuarios', true),
-          _buildMenuItem(context, Icons.folder, 'Projetos', '/projetos'),
+          // ⭐ PROJETOS (com submenu)
+          _buildMenuItem(
+            context,
+            Icons.folder,
+            'Projetos',
+            '/projetos',
+          ),
+          _buildMenuItem(
+            context,
+            Icons.attach_money,
+            'Fontes de Recursos',
+            '/projetos/fontes',
+          ),
+          _buildMenuItem(
+            context,
+            Icons.swap_horiz,
+            'Contra Partidas',
+            '/projetos/contra-partidas',
+          ),
           _buildMenuItem(context, Icons.checklist, 'Tarefas', '/tarefas', true),
           
           // ⭐ OPERACIONAL - SUBMENU

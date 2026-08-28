@@ -4,7 +4,6 @@
 /// ============================================
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../models/projetos/fonte_alocacao_model.dart';
@@ -13,7 +12,7 @@ import '../../services/projetos/fontes_base_service.dart';
 import '../../theme/app_theme.dart';
 
 class FonteAlocacaoListScreen extends StatefulWidget {
-  final String? fonteId; // Se vier de uma fonte específica
+  final String? fonteId;
 
   const FonteAlocacaoListScreen({super.key, this.fonteId});
 
@@ -34,6 +33,13 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
     _carregarDados();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ⭐ RECARREGAR QUANDO VOLTAR
+    _carregarDados();
+  }
+
   Future<void> _carregarDados() async {
     setState(() {
       _isLoading = true;
@@ -44,6 +50,7 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
       if (widget.fonteId != null) {
         _fonte = await _service.getById(widget.fonteId!);
         _alocacoes = await _service.getAlocacoes(widget.fonteId!);
+        print('📋 [ALOCACAO_LIST] Carregadas ${_alocacoes.length} alocações');
       } else {
         // Carregar todas as alocações
         // TODO: Implementar listagem geral
@@ -51,6 +58,7 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
       }
     } catch (e) {
       _error = e.toString();
+      print('❌ [ALOCACAO_LIST] Erro: $e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -84,9 +92,12 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => context.go(
-              '/projetos/fontes/alocacao/novo${widget.fonteId != null ? '?fonteId=${widget.fonteId}' : ''}'
-            ),
+            onPressed: () {
+              final url = widget.fonteId != null
+                  ? '/projetos/fontes/alocacao/novo?fonteId=${widget.fonteId}'
+                  : '/projetos/fontes/alocacao/novo';
+              context.go(url);
+            },
             tooltip: 'Nova Alocação',
           ),
           IconButton(
@@ -137,6 +148,9 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
   }
 
   Widget _buildResumoFonte() {
+    final totalAlocado = _calcularTotalAlocado();
+    final saldo = _calcularSaldo();
+
     return Container(
       padding: const EdgeInsets.all(16),
       color: Colors.green.withOpacity(0.05),
@@ -165,7 +179,7 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      'Alocado: ${_formatCurrency(_calcularTotalAlocado())}',
+                      'Alocado: ${_formatCurrency(totalAlocado)}',
                       style: TextStyle(
                         color: Colors.orange[700],
                         fontWeight: FontWeight.bold,
@@ -173,9 +187,9 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      'Saldo: ${_formatCurrency(_calcularSaldo())}',
+                      'Saldo: ${_formatCurrency(saldo)}',
                       style: TextStyle(
-                        color: _calcularSaldo() >= 0 ? Colors.green : Colors.red,
+                        color: saldo >= 0 ? Colors.green : Colors.red,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -204,14 +218,14 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
 
   Widget _buildListaAlocacoes() {
     if (_alocacoes.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.attach_money, size: 64, color: AppTheme.textLight),
-            SizedBox(height: 16),
-            Text('Nenhuma alocação encontrada'),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
+            const Text('Nenhuma alocação encontrada'),
+            const SizedBox(height: 8),
             Text(
               'Clique em "+" para alocar este recurso',
               style: TextStyle(color: AppTheme.textSecondary),
@@ -266,6 +280,11 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
             ),
             onTap: () {
               // TODO: Editar alocação
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Edição de alocação em desenvolvimento'),
+                ),
+              );
             },
           ),
         );

@@ -8,8 +8,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../models/projetos/fonte_alocacao_model.dart';
 import '../../models/projetos/fontes_base_model.dart';
+import '../../models/projetos/projeto_model.dart';
 import '../../services/projetos/fontes_base_service.dart';
+import '../../services/projetos/projeto_service.dart';
 import '../../theme/app_theme.dart';
+import 'fonte_alocacao_list_screen.dart';
 
 class FonteAlocacaoFormScreen extends StatefulWidget {
   final String? alocacaoId;
@@ -33,8 +36,10 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
   final _obsController = TextEditingController();
 
   final FontesBaseService _service = FontesBaseService();
+  final ProjetoService _projetoService = ProjetoService();
+  
   List<FontesBaseModel> _fontes = [];
-  List<String> _projetos = []; // TODO: Carregar projetos
+  List<ProjetoModel> _projetos = [];
   String? _fonteId;
   String? _destinoId;
   bool _isLoading = false;
@@ -62,21 +67,16 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Carregar fontes
       _fontes = await _service.list();
+      _projetos = await _projetoService.list();
 
-      // Carregar projetos (TODO: Implementar)
-      _projetos = ['Projeto 1', 'Projeto 2', 'Projeto 3'];
-
-      // Se for edição, carregar dados
-      if (_isEditing) {
-        // TODO: Carregar alocação
-      }
-
-      // Se tiver fonteId, selecionar automaticamente
       if (widget.fonteId != null && _fontes.isNotEmpty) {
         _fonteId = widget.fonteId;
         await _calcularSaldo();
+      }
+
+      if (_isEditing) {
+        // TODO: Carregar alocação para edição
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -142,7 +142,10 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
           backgroundColor: Colors.green,
         ),
       );
-      context.go('/projetos/fontes/alocacoes${_fonteId != null ? '?fonteId=$_fonteId' : ''}');
+      
+      // ⭐ VOLTAR PARA A LISTA
+      Navigator.pop(context, true);
+      
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -164,7 +167,7 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.go('/projetos/fontes/alocacoes'),
+          onPressed: () => Navigator.pop(context),
           tooltip: 'Voltar',
         ),
         actions: [
@@ -236,7 +239,7 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                                 children: [
                                   const Text(
                                     'Saldo Disponível:',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -264,8 +267,8 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                               ),
                               items: _projetos.map((projeto) {
                                 return DropdownMenuItem(
-                                  value: projeto,
-                                  child: Text(projeto),
+                                  value: projeto.id,
+                                  child: Text(projeto.descricao ?? 'Projeto sem título'),
                                 );
                               }).toList(),
                               onChanged: (value) => setState(() => _destinoId = value),
@@ -350,7 +353,7 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         OutlinedButton(
-                          onPressed: () => context.go('/projetos/fontes/alocacoes'),
+                          onPressed: () => Navigator.pop(context),
                           child: const Text('Cancelar'),
                         ),
                         const SizedBox(width: 16),

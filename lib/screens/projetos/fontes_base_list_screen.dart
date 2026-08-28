@@ -64,7 +64,7 @@ class _FontesBaseListScreenState extends State<FontesBaseListScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.go('/projetos'),
+          onPressed: () => context.go('/'),
           tooltip: 'Voltar',
         ),
         actions: [

@@ -14,8 +14,11 @@ import '../screens/projetos/projeto_form_screen.dart';
 import '../screens/projetos/projeto_detail_screen.dart';
 import '../screens/projetos/fontes_base_list_screen.dart';
 import '../screens/projetos/fontes_base_form_screen.dart';
+import '../screens/projetos/fonte_alocacao_list_screen.dart';
+import '../screens/projetos/fonte_alocacao_form_screen.dart';
 import '../screens/projetos/contra_partida_list_screen.dart';
 import '../screens/projetos/contra_partida_form_screen.dart';
+import '../screens/projetos/fontes_base_detail_screen.dart';
 
 // ⭐ GERAIS
 import '../screens/auth/login_screen.dart';
@@ -124,35 +127,69 @@ final GoRouter appRouter = GoRouter(
       ),
       routes: [
         // ⭐ ROTAS ESPECÍFICAS (DEVEM VIR PRIMEIRO)
-        
-        // FONTES DE RECURSOS (Regra 7)
+    // ⭐ FONTES DE RECURSOS (Regra 7)
+    GoRoute(
+      path: 'fontes',
+      name: 'fontes-recursos',
+      pageBuilder: (context, state) => const MaterialPage(
+        child: FontesBaseListScreen(),
+      ),
+      routes: [
         GoRoute(
-          path: 'fontes',
-          name: 'fontes-recursos',
+          path: 'novo',
+          name: 'nova-fonte',
           pageBuilder: (context, state) => const MaterialPage(
-            child: FontesBaseListScreen(),
+            child: FontesBaseFormScreen(),
           ),
-          routes: [
-            GoRoute(
-              path: 'novo',
-              name: 'nova-fonte',
-              pageBuilder: (context, state) => const MaterialPage(
-                child: FontesBaseFormScreen(),
-              ),
-            ),
-            GoRoute(
-              path: 'editar/:id',
-              name: 'editar-fonte',
-              pageBuilder: (context, state) {
-                final id = state.pathParameters['id']!;
-                return MaterialPage(
-                  child: FontesBaseFormScreen(fonteId: id),
-                );
-              },
-            ),
-          ],
         ),
-        
+        GoRoute(
+          path: 'editar/:id',
+          name: 'editar-fonte',
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return MaterialPage(
+              child: FontesBaseFormScreen(fonteId: id),
+            );
+          },
+        ),
+        // ⭐ DETALHES DA FONTE (NOVA ROTA)
+        GoRoute(
+          path: ':id',
+          name: 'detalhe-fonte',
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return MaterialPage(
+              child: FontesBaseDetailScreen(fonteId: id),
+            );
+          },
+        ),
+        // ⭐ ALOCAÇÕES
+        GoRoute(
+          path: 'alocacoes',
+          name: 'alocacoes',
+          pageBuilder: (context, state) => const MaterialPage(
+            child: FonteAlocacaoListScreen(),
+          ),
+        ),
+        GoRoute(
+          path: 'alocacao/novo',
+          name: 'nova-alocacao',
+          pageBuilder: (context, state) => const MaterialPage(
+            child: FonteAlocacaoFormScreen(),
+          ),
+        ),
+        GoRoute(
+          path: 'alocacao/editar/:id',
+          name: 'editar-alocacao',
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return MaterialPage(
+              child: FonteAlocacaoFormScreen(alocacaoId: id),
+            );
+          },
+        ),
+      ],
+    ),        
         // CONTRA PARTIDAS (Regra 11)
         GoRoute(
           path: 'contra-partidas',

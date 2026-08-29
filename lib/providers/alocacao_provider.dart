@@ -54,12 +54,8 @@ class AlocacaoProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Salva a alocação via serviço
       await _service.saveAlocacao(alocacao);
-      
-      // Recarrega o extrato atualizado
       await getExtrato(alocacao.fonte_alocacao_id);
-      
       _isLoading = false;
       notifyListeners();
     } catch (e) {

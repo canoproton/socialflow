@@ -1,0 +1,1 @@
+delete from fontes_base where 'id' = '2ce5411d-287f-4338-8a9c-bb83d418530c' and 'id' = 'c431c15b-54d2-4f9e-928e-6c02cbec56d4';

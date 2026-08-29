@@ -7,13 +7,12 @@ class FonteAlocacao {
   final String destino_alocao_id;
   final String descricao;
   final double valor_alocado;
-  final double saldo_recurso;  // ✅ Saldo após esta alocação
+  final double saldo_recurso;
   final DateTime data_alocacao;
   final String? obs;
   final String? atualizado_por;
   final DateTime? atualizado_em;
   
-  // Campos relacionados
   final FontesBase? fonte;
   final Projeto? projeto;
 
@@ -48,16 +47,10 @@ class FonteAlocacao {
           : null,
       fonte: json['fonte'] is Map 
           ? FontesBase.fromJson(json['fonte']) 
-          : json['fonte_alocacao'] is Map
-              ? FontesBase.fromJson(json['fonte_alocacao'])
-              : null,
+          : null,
       projeto: json['projeto'] is Map 
           ? Projeto.fromJson(json['projeto']) 
-          : json['destino_alocao'] is Map
-              ? Projeto.fromJson(json['destino_alocao'])
-              : json['destino_alocao_id'] is Map
-                  ? Projeto.fromJson(json['destino_alocao_id'])
-                  : null,
+          : null,
     );
   }
 

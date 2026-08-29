@@ -96,7 +96,7 @@ class _AlocacaoExtratoScreenState extends State<AlocacaoExtratoScreen> {
 
     return Column(
       children: [
-        // ✅ Cabeçalho da Fonte
+        // Cabeçalho da Fonte
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -107,7 +107,7 @@ class _AlocacaoExtratoScreenState extends State<AlocacaoExtratoScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                fonte.entidade ?? 'Entidade não informada',
+                'Entidade: ${fonte.entidade ?? 'Entidade não informada'}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -145,7 +145,7 @@ class _AlocacaoExtratoScreenState extends State<AlocacaoExtratoScreen> {
           ),
         ),
 
-        // ✅ Botão de Alocação (habilitado apenas se saldo > 0)
+        // Botão de Alocação
         if (saldoAtual > 0)
           Container(
             padding: const EdgeInsets.all(12),
@@ -200,7 +200,7 @@ class _AlocacaoExtratoScreenState extends State<AlocacaoExtratoScreen> {
 
         const Divider(height: 1),
 
-        // ✅ Extrato
+        // Extrato
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(8),

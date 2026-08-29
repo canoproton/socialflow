@@ -23,13 +23,20 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
   @override
   void initState() {
     super.initState();
-    _carregarProjetos();
+    // ✅ SÓ carrega a lista de projetos para o dropdown
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProjetoProvider>().loadProjetos();
+    });
+    // ✅ NÃO carrega dados automaticamente
   }
 
-  Future<void> _carregarProjetos() async {
-    await context.read<ProjetoProvider>().loadProjetos();
+  @override
+  void dispose() {
+    _entidadeController.dispose();
+    super.dispose();
   }
 
+  // ✅ Método de pesquisa - chamado apenas quando o usuário clica em Pesquisar
   Future<void> _pesquisar() async {
     final filtro = AlocacaoPesquisaFiltro(
       entidade: _entidadeController.text.isNotEmpty ? _entidadeController.text : null,
@@ -43,7 +50,9 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
 
     try {
       await context.read<AlocacaoProvider>().pesquisarFontes(filtro);
+      print('✅ [PESQUISA] Resultados: ${context.read<AlocacaoProvider>().resultados.length}');
     } catch (e) {
+      print('❌ [PESQUISA] Erro: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro na pesquisa: $e'), backgroundColor: Colors.red),
       );
@@ -60,7 +69,6 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
       _dataInicio = null;
       _dataFim = null;
     });
-    // Limpa os resultados
     context.read<AlocacaoProvider>().limparResultados();
   }
 
@@ -106,7 +114,7 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Com Saldo
+                // Linha: Com Saldo + Projeto
                 Row(
                   children: [
                     Expanded(
@@ -347,6 +355,10 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Text(
+                                    'Fonte: ${fonte.descricao ?? 'Sem descrição'}',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
                                   Text(
                                     'Valor: ${_formatMoney(fonte.valor_recurso)}',
                                     style: const TextStyle(fontSize: 12),

@@ -88,7 +88,7 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
         destino_alocao_id: _projetoSelecionado!,
         descricao: _descricaoController.text,
         valor_alocado: valor,
-        saldo_recurso: saldoAtual - valor, // ✅ Saldo após esta alocação
+        saldo_recurso: saldoAtual - valor,
         data_alocacao: _dataAlocacao!,
         obs: _obsController.text.isNotEmpty ? _obsController.text : null,
       );
@@ -136,7 +136,6 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Fonte de Recurso
                 TextFormField(
                   initialValue: fonte?.entidade ?? 'Carregando...',
                   readOnly: true,
@@ -148,7 +147,6 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Resumo
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -185,7 +183,6 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Destino (Projeto)
                 DropdownButtonFormField<String>(
                   value: _projetoSelecionado,
                   decoration: const InputDecoration(
@@ -209,7 +206,6 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Descrição
                 TextFormField(
                   controller: _descricaoController,
                   decoration: const InputDecoration(
@@ -227,7 +223,6 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Valor Alocado
                 TextFormField(
                   controller: _valorController,
                   decoration: InputDecoration(
@@ -257,7 +252,6 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Data de Alocação
                 InkWell(
                   onTap: () async {
                     final date = await showDatePicker(
@@ -285,7 +279,6 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Observações
                 TextFormField(
                   controller: _obsController,
                   decoration: const InputDecoration(
@@ -298,7 +291,6 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Botões
                 Row(
                   children: [
                     Expanded(

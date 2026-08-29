@@ -1,5 +1,6 @@
 /// ============================================
-/// TELA: Detalhes do Projeto (Layout Profissional com Todos os Relacionamentos)
+/// TELA: Detalhes do Projeto (com Fontes e Contra Partida)
+/// REGRAS 7 e 11
 /// ============================================
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,10 @@ import '../../providers/projetos/projeto_provider.dart';
 import '../../models/projetos/projeto_model.dart';
 import '../../models/projetos/meta_model.dart';
 import '../../models/projetos/etapa_model.dart';
+import '../../models/projetos/fontes_base_model.dart';
+import '../../models/projetos/contra_partida_model.dart';
+import '../../services/projetos/fontes_base_service.dart';
+import '../../services/projetos/contra_partida_service.dart';
 import '../../theme/app_theme.dart';
 
 class ProjetoDetailScreen extends StatefulWidget {
@@ -26,12 +31,39 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   bool _showContraPartida = true;
   bool _showDocumentos = true;
 
+  // ⭐ DADOS DE FONTES E CONTRA PARTIDA
+  List<FontesBaseModel> _fontesVinculadas = [];
+  List<ContraPartidaModel> _contraPartidasVinculadas = [];
+  double _valorTotalAportado = 0;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjetoProvider>().loadProjetoCompleto(widget.projetoId);
+      _carregarFontesEContraPartidas();
     });
+  }
+
+  Future<void> _carregarFontesEContraPartidas() async {
+    try {
+      // TODO: Buscar fontes vinculadas ao projeto
+      // Por enquanto, dados mockados
+      final fontesService = FontesBaseService();
+      _fontesVinculadas = await fontesService.list();
+      
+      final cpService = ContraPartidaService();
+      _contraPartidasVinculadas = await cpService.list();
+      
+      // ⭐ CALCULAR VALOR TOTAL APORTADO (Regra 7)
+      _valorTotalAportado = _fontesVinculadas.fold(
+        0, (sum, fonte) => sum + fonte.valorRecurso
+      );
+      
+      setState(() {});
+    } catch (e) {
+      print('Erro ao carregar fontes/contra partidas: $e');
+    }
   }
 
   String _formatCurrency(double? value) {
@@ -89,6 +121,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: () {
+              // TODO: Implementar PDF (Regra 14)
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Funcionalidade de PDF em desenvolvimento')),
               );
@@ -263,7 +296,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   }
 
   // ============================================
-  // RESUMO FINANCEIRO
+  // RESUMO FINANCEIRO (COM VALOR TOTAL APORTADO - Regra 7)
   // ============================================
 
   Widget _buildFinancialSummary(ProjetoModel projeto) {
@@ -318,13 +351,14 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
                 ),
               ],
             ),
+            // ⭐ VALOR TOTAL APORTADO (Regra 7 - READONLY)
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: _buildFinanceItem(
-                    'Total Aportado',
-                    _formatCurrency(projeto.valorTotalAportado),
+                    'Total Aportado (READONLY)',
+                    _formatCurrency(_valorTotalAportado),
                     Colors.purple,
                   ),
                 ),
@@ -456,7 +490,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   }
 
   // ============================================
-  // RELACIONAMENTOS
+  // RELACIONAMENTOS (Fontes, Contra Partida, Documentos)
   // ============================================
 
   Widget _buildRelacionamentos(ProjetoModel projeto) {
@@ -475,37 +509,37 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
             const Divider(),
             const SizedBox(height: 8),
 
-            // RECURSOS
+            // ⭐ FONTES DE RECURSOS (Regra 7 - READONLY)
             _buildExpandableSection(
-              title: 'Fontes de Recursos',
+              title: 'Fontes de Recursos (READONLY)',
               icon: Icons.attach_money,
               iconColor: Colors.green,
               isExpanded: _showRecursos,
               onToggle: () => setState(() => _showRecursos = !_showRecursos),
-              child: projeto.recursos != null && projeto.recursos!.isNotEmpty
+              child: _fontesVinculadas.isNotEmpty
                   ? Column(
-                      children: projeto.recursos!.map((recurso) => 
-                        _buildRecursoItem(recurso)
+                      children: _fontesVinculadas.map((fonte) => 
+                        _buildFonteItem(fonte)
                       ).toList(),
                     )
                   : const Padding(
                       padding: EdgeInsets.all(12),
-                      child: Text('Nenhum recurso vinculado', style: TextStyle(color: Colors.grey)),
+                      child: Text('Nenhuma fonte vinculada', style: TextStyle(color: Colors.grey)),
                     ),
             ),
             const SizedBox(height: 8),
 
-            // CONTRA PARTIDA
+            // ⭐ CONTRA PARTIDA (Regra 11 - READONLY)
             _buildExpandableSection(
-              title: 'Contra Partida',
+              title: 'Contra Partida (READONLY)',
               icon: Icons.swap_horiz,
               iconColor: Colors.orange,
               isExpanded: _showContraPartida,
               onToggle: () => setState(() => _showContraPartida = !_showContraPartida),
-              child: projeto.contraPartida != null && projeto.contraPartida!.isNotEmpty
+              child: _contraPartidasVinculadas.isNotEmpty
                   ? Column(
-                      children: projeto.contraPartida!.map((item) => 
-                        _buildContraPartidaItem(item)
+                      children: _contraPartidasVinculadas.map((cp) => 
+                        _buildContraPartidaItem(cp)
                       ).toList(),
                     )
                   : const Padding(
@@ -569,7 +603,8 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
     );
   }
 
-  Widget _buildRecursoItem(String recurso) {
+  // ⭐ FONTE ITEM (READONLY - Regra 7)
+  Widget _buildFonteItem(FontesBaseModel fonte) {
     return Container(
       padding: const EdgeInsets.all(8),
       margin: const EdgeInsets.only(bottom: 4),
@@ -582,13 +617,25 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
         children: [
           const Icon(Icons.attach_money, size: 16, color: Colors.green),
           const SizedBox(width: 8),
-          Expanded(child: Text(recurso)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(fonte.descricao, style: const TextStyle(fontWeight: FontWeight.w500)),
+                Text(
+                  'Entidade: ${fonte.entidade} | Valor: ${_formatCurrency(fonte.valorRecurso)}',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildContraPartidaItem(String item) {
+  // ⭐ CONTRA PARTIDA ITEM (READONLY - Regra 11)
+  Widget _buildContraPartidaItem(ContraPartidaModel cp) {
     return Container(
       padding: const EdgeInsets.all(8),
       margin: const EdgeInsets.only(bottom: 4),
@@ -601,7 +648,23 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
         children: [
           const Icon(Icons.swap_horiz, size: 16, color: Colors.orange),
           const SizedBox(width: 8),
-          Expanded(child: Text(item)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(cp.descricao, style: const TextStyle(fontWeight: FontWeight.w500)),
+                Text(
+                  'Valor: ${_formatCurrency(cp.valor)} | Status: ${cp.statusLabel}',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Chip(
+            label: Text(cp.statusLabel),
+            backgroundColor: Colors.orange.withOpacity(0.2),
+            labelStyle: TextStyle(color: Colors.orange, fontSize: 10),
+          ),
         ],
       ),
     );
@@ -914,7 +977,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   }
 
   // ============================================
-  // BOTÕES DE AÇÃO (COM EXECUÇÃO)
+  // BOTÕES DE AÇÃO
   // ============================================
 
   Widget _buildActionButtons(ProjetoModel projeto) {
@@ -927,11 +990,14 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
           label: const Text('Editar'),
         ),
         const SizedBox(width: 12),
-        
-        // ⭐ BOTÃO EXECUTAR (Regra 8) - Só aparece se o status for APROVADO
         if (projeto.statusProjeto == ProjetoModel.STATUS_APROVADO)
           ElevatedButton.icon(
-            onPressed: () => _executarProjeto(context, projeto.id),
+            onPressed: () {
+              // TODO: Executar projeto (Regra 8)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Executando projeto...')),
+              );
+            },
             icon: const Icon(Icons.play_arrow, size: 18),
             label: const Text('Executar Projeto'),
             style: ElevatedButton.styleFrom(
@@ -939,11 +1005,10 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
               foregroundColor: Colors.white,
             ),
           ),
-        
-        // ⭐ BOTÃO GERAR PDF (Regra 14) - Só aparece se estiver EXECUTANDO
         if (projeto.statusProjeto == ProjetoModel.STATUS_EXECUTANDO)
           ElevatedButton.icon(
             onPressed: () {
+              // TODO: Gerar PDF (Regra 14)
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Gerando PDF...')),
               );
@@ -957,86 +1022,5 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
           ),
       ],
     );
-  }
-
-  // ============================================
-  // MÉTODO: EXECUTAR PROJETO (Regra 8)
-  // ============================================
-
-  /// ⭐ REGRA 8: Executar projeto (disparar todas as etapas)
-  void _executarProjeto(BuildContext context, String projetoId) async {
-    // ⭐ Confirmar com o usuário
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Executar Projeto'),
-        content: const Text(
-          'Ao executar o projeto, todas as etapas serão disparadas para:\n\n'
-          '📋 Tickets (módulo Tarefas)\n'
-          '💰 ItemLancamento (módulo Financeiro)\n\n'
-          'Deseja continuar?'
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Executar', style: TextStyle(color: Colors.green)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && mounted) {
-      // ⭐ Mostrar loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: Card(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Executando projeto...'),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-
-      try {
-        final provider = context.read<ProjetoProvider>();
-        final success = await provider.aprovarProjeto(projetoId);
-
-        // ⭐ Fechar loading
-        Navigator.pop(context);
-
-        if (success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Projeto executado com sucesso!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // ⭐ Recarregar a tela
-          provider.loadProjetoCompleto(projetoId);
-        }
-      } catch (e) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Erro: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 }

@@ -17,6 +17,10 @@ class FontesBaseModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  // ⭐ CAMPOS CALCULADOS (NÃO VÊM DO BANCO)
+  double _totalAlocado = 0;
+  double _saldo = 0;
+
   FontesBaseModel({
     required this.id,
     required this.descricao,
@@ -87,8 +91,10 @@ class FontesBaseModel {
     DateTime? atualizadoEm,
     DateTime? createdAt,
     DateTime? updatedAt,
+    double? totalAlocado,
+    double? saldo,
   }) {
-    return FontesBaseModel(
+    final newModel = FontesBaseModel(
       id: id ?? this.id,
       descricao: descricao ?? this.descricao,
       entidade: entidade ?? this.entidade,
@@ -102,11 +108,30 @@ class FontesBaseModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+    newModel._totalAlocado = totalAlocado ?? this._totalAlocado;
+    newModel._saldo = saldo ?? this._saldo;
+    return newModel;
   }
 
-  // ⭐ CÁLCULO DO SALDO DO RECURSO
-  double get saldoDisponivel {
-    // TODO: Buscar alocações existentes
-    return valorRecurso;
+  // ⭐ GETTERS PARA CAMPOS CALCULADOS
+  double get totalAlocado => _totalAlocado;
+  double get saldo => _saldo;
+
+  // ⭐ MÉTODO PARA ATUALIZAR CAMPOS CALCULADOS
+  void atualizarTotais(double totalAlocado) {
+    _totalAlocado = totalAlocado;
+    _saldo = valorRecurso - totalAlocado;
+  }
+
+  // ⭐ PERCENTUAL ALOCADO
+  double get percentualAlocado {
+    if (valorRecurso == 0) return 0;
+    return (_totalAlocado / valorRecurso) * 100;
+  }
+
+  // ⭐ PERCENTUAL DISPONÍVEL
+  double get percentualDisponivel {
+    if (valorRecurso == 0) return 0;
+    return ((valorRecurso - _totalAlocado) / valorRecurso) * 100;
   }
 }

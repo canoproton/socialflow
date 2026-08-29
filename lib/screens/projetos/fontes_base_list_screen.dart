@@ -1,13 +1,11 @@
 /// ============================================
-/// TELA: Lista de Fontes de Recursos
+/// TELA: Lista de Fontes de Recursos (com Resumo)
 /// REGRA 7
 /// ============================================
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../providers/projetos/projeto_provider.dart';
 import '../../models/projetos/fontes_base_model.dart';
 import '../../services/projetos/fontes_base_service.dart';
 import '../../theme/app_theme.dart';
@@ -25,6 +23,10 @@ class _FontesBaseListScreenState extends State<FontesBaseListScreen> {
   bool _isLoading = false;
   String? _error;
 
+  // ⭐ RESUMO
+  double _totalGeral = 0;
+  double _totalAlocadoGeral = 0;
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +41,14 @@ class _FontesBaseListScreenState extends State<FontesBaseListScreen> {
 
     try {
       _fontes = await _service.list();
+      
+      // ⭐ CALCULAR TOTAIS GERAIS
+      _totalGeral = 0;
+      _totalAlocadoGeral = 0;
+      for (var fonte in _fontes) {
+        _totalGeral += fonte.valorRecurso;
+        _totalAlocadoGeral += fonte.totalAlocado;
+      }
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -126,61 +136,216 @@ class _FontesBaseListScreenState extends State<FontesBaseListScreen> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(8),
-      itemCount: _fontes.length,
-      itemBuilder: (context, index) {
-        final fonte = _fontes[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.green,
-              child: Text(
-                fonte.descricao.substring(0, 1).toUpperCase(),
-                style: const TextStyle(color: Colors.white),
+    return Column(
+      children: [
+        // ⭐ RESUMO GERAL
+        _buildResumoGeral(),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(8),
+            itemCount: _fontes.length,
+            itemBuilder: (context, index) {
+              final fonte = _fontes[index];
+              return _buildFonteCard(fonte);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResumoGeral() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.05),
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[200]!),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildResumoItem(
+            'Total Geral',
+            _formatCurrency(_totalGeral),
+            Colors.blue,
+          ),
+          _buildResumoItem(
+            'Total Alocado',
+            _formatCurrency(_totalAlocadoGeral),
+            Colors.orange,
+          ),
+          _buildResumoItem(
+            'Saldo Geral',
+            _formatCurrency(_totalGeral - _totalAlocadoGeral),
+            (_totalGeral - _totalAlocadoGeral) >= 0 ? Colors.green : Colors.red,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResumoItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: AppTheme.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFonteCard(FontesBaseModel fonte) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: InkWell(
+        onTap: () => context.go('/projetos/fontes/${fonte.id}'),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fonte.descricao,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          'Entidade: ${fonte.entidade}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () => context.go('/projetos/fontes/editar/${fonte.id}'),
+                    tooltip: 'Editar',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _confirmDelete(fonte),
+                    tooltip: 'Excluir',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // ⭐ RESUMO DA FONTE (Total, Alocado, Saldo)
+              Row(
+                children: [
+                  _buildFonteResumoItem(
+                    'Total',
+                    _formatCurrency(fonte.valorRecurso),
+                    Colors.blue,
+                  ),
+                  _buildFonteResumoItem(
+                    'Alocado',
+                    _formatCurrency(fonte.totalAlocado),
+                    Colors.orange,
+                  ),
+                  _buildFonteResumoItem(
+                    'Saldo',
+                    _formatCurrency(fonte.saldo),
+                    fonte.saldo >= 0 ? Colors.green : Colors.red,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+
+              // ⭐ BARRA DE PROGRESSO
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: fonte.percentualAlocado / 100,
+                  backgroundColor: Colors.grey[200],
+                  minHeight: 6,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    fonte.percentualAlocado >= 80
+                        ? Colors.orange
+                        : fonte.percentualAlocado >= 100
+                            ? Colors.red
+                            : Colors.green,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${fonte.percentualAlocado.toStringAsFixed(1)}% alocado',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+
+              if (fonte.dataAprovacao != null)
+                Text(
+                  'Aprovação: ${_formatDate(fonte.dataAprovacao)}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFonteResumoItem(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: AppTheme.textSecondary,
               ),
             ),
-            title: Text(
-              fonte.descricao,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Entidade: ${fonte.entidade}'),
-                Text(
-                  'Valor: ${_formatCurrency(fonte.valorRecurso)}',
-                  style: const TextStyle(color: Colors.green),
-                ),
-                if (fonte.dataAprovacao != null)
-                  Text('Aprovação: ${_formatDate(fonte.dataAprovacao)}'),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.visibility, color: AppTheme.primaryColor),
-                  onPressed: () => context.go('/projetos/fontes/${fonte.id}'),
-                  tooltip: 'Ver detalhes',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () => context.go('/projetos/fontes/editar/${fonte.id}'),
-                  tooltip: 'Editar',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _confirmDelete(fonte),
-                  tooltip: 'Excluir',
-                ),
-              ],
-            ),
-            onTap: () => context.go('/projetos/fontes/${fonte.id}'),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 

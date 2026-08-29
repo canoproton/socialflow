@@ -14,11 +14,11 @@ import '../screens/projetos/projeto_form_screen.dart';
 import '../screens/projetos/projeto_detail_screen.dart';
 import '../screens/projetos/fontes_base_list_screen.dart';
 import '../screens/projetos/fontes_base_form_screen.dart';
+import '../screens/projetos/fontes_base_detail_screen.dart';
 import '../screens/projetos/fonte_alocacao_list_screen.dart';
 import '../screens/projetos/fonte_alocacao_form_screen.dart';
 import '../screens/projetos/contra_partida_list_screen.dart';
 import '../screens/projetos/contra_partida_form_screen.dart';
-import '../screens/projetos/fontes_base_detail_screen.dart';
 
 // ⭐ GERAIS
 import '../screens/auth/login_screen.dart';
@@ -126,71 +126,93 @@ final GoRouter appRouter = GoRouter(
         child: ProjetoListScreen(),
       ),
       routes: [
-        // ⭐ ROTAS ESPECÍFICAS (DEVEM VIR PRIMEIRO)
-    // ⭐ FONTES DE RECURSOS (Regra 7)
-    GoRoute(
-      path: 'fontes',
-      name: 'fontes-recursos',
-      pageBuilder: (context, state) => const MaterialPage(
-        child: FontesBaseListScreen(),
-      ),
-      routes: [
+        // NOVO PROJETO
         GoRoute(
           path: 'novo',
-          name: 'nova-fonte',
+          name: 'novo-projeto',
           pageBuilder: (context, state) => const MaterialPage(
-            child: FontesBaseFormScreen(),
+            child: ProjetoFormScreen(),
           ),
         ),
+        
+        // EDITAR PROJETO
         GoRoute(
           path: 'editar/:id',
-          name: 'editar-fonte',
+          name: 'editar-projeto',
           pageBuilder: (context, state) {
             final id = state.pathParameters['id']!;
             return MaterialPage(
-              child: FontesBaseFormScreen(fonteId: id),
+              child: ProjetoFormScreen(projetoId: id),
             );
           },
         ),
-        // ⭐ DETALHES DA FONTE (NOVA ROTA)
+        
+        // ⭐ FONTES DE RECURSOS (Regra 7)
         GoRoute(
-          path: ':id',
-          name: 'detalhe-fonte',
-          pageBuilder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return MaterialPage(
-              child: FontesBaseDetailScreen(fonteId: id),
-            );
-          },
-        ),
-        // ⭐ ALOCAÇÕES
-        GoRoute(
-          path: 'alocacoes',
-          name: 'alocacoes',
+          path: 'fontes',
+          name: 'fontes-recursos',
           pageBuilder: (context, state) => const MaterialPage(
-            child: FonteAlocacaoListScreen(),
+            child: FontesBaseListScreen(),
           ),
+          routes: [
+            // ⭐ ROTAS ESPECÍFICAS - DEVEM VIR PRIMEIRO
+            GoRoute(
+              path: 'novo',
+              name: 'nova-fonte',
+              pageBuilder: (context, state) => const MaterialPage(
+                child: FontesBaseFormScreen(),
+              ),
+            ),
+            GoRoute(
+              path: 'editar/:id',
+              name: 'editar-fonte',
+              pageBuilder: (context, state) {
+                final id = state.pathParameters['id']!;
+                return MaterialPage(
+                  child: FontesBaseFormScreen(fonteId: id),
+                );
+              },
+            ),
+            // ⭐ ALOCAÇÕES - DEVEM VIR ANTES DE :id
+            GoRoute(
+              path: 'alocacoes',
+              name: 'alocacoes',
+              pageBuilder: (context, state) => const MaterialPage(
+                child: FonteAlocacaoListScreen(),
+              ),
+            ),
+            GoRoute(
+              path: 'alocacao/novo',
+              name: 'nova-alocacao',
+              pageBuilder: (context, state) => const MaterialPage(
+                child: FonteAlocacaoFormScreen(),
+              ),
+            ),
+            GoRoute(
+              path: 'alocacao/editar/:id',
+              name: 'editar-alocacao',
+              pageBuilder: (context, state) {
+                final id = state.pathParameters['id']!;
+                return MaterialPage(
+                  child: FonteAlocacaoFormScreen(alocacaoId: id),
+                );
+              },
+            ),
+            // ⭐ DETALHES DA FONTE - DEVE VIR POR ÚLTIMO
+            GoRoute(
+              path: ':id',
+              name: 'detalhe-fonte',
+              pageBuilder: (context, state) {
+                final id = state.pathParameters['id']!;
+                return MaterialPage(
+                  child: FontesBaseDetailScreen(fonteId: id),
+                );
+              },
+            ),
+          ],
         ),
-        GoRoute(
-          path: 'alocacao/novo',
-          name: 'nova-alocacao',
-          pageBuilder: (context, state) => const MaterialPage(
-            child: FonteAlocacaoFormScreen(),
-          ),
-        ),
-        GoRoute(
-          path: 'alocacao/editar/:id',
-          name: 'editar-alocacao',
-          pageBuilder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return MaterialPage(
-              child: FonteAlocacaoFormScreen(alocacaoId: id),
-            );
-          },
-        ),
-      ],
-    ),        
-        // CONTRA PARTIDAS (Regra 11)
+        
+        // ⭐ CONTRA PARTIDAS (Regra 11)
         GoRoute(
           path: 'contra-partidas',
           name: 'contra-partidas',
@@ -218,24 +240,7 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
         
-        // ⭐ ROTA COM PARÂMETRO (DEVE VIR POR ÚLTIMO)
-        GoRoute(
-          path: 'novo',
-          name: 'novo-projeto',
-          pageBuilder: (context, state) => const MaterialPage(
-            child: ProjetoFormScreen(),
-          ),
-        ),
-        GoRoute(
-          path: 'editar/:id',
-          name: 'editar-projeto',
-          pageBuilder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return MaterialPage(
-              child: ProjetoFormScreen(projetoId: id),
-            );
-          },
-        ),
+        // ⭐ DETALHES DO PROJETO - DEVE VIR POR ÚLTIMO
         GoRoute(
           path: ':id',
           name: 'detalhe-projeto',

@@ -11,6 +11,13 @@ import '../../models/projetos/meta_model.dart';
 import '../../models/projetos/etapa_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/projetos/meta_card_widget.dart';
+import '../../models/projetos/fontes_base_model.dart';
+import '../../models/projetos/fonte_alocacao_model.dart';
+import '../../models/projetos/contra_partida_model.dart';
+import '../../services/projetos/fontes_base_service.dart';
+import '../../services/projetos/contra_partida_service.dart';
+import '../../widgets/projetos/fonte_card_widget.dart';
+import '../../widgets/projetos/contra_partida_card_widget.dart';
 
 class ProjetoFormScreen extends StatefulWidget {
   final String? projetoId;

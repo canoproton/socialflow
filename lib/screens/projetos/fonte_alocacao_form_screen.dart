@@ -12,7 +12,6 @@ import '../../models/projetos/projeto_model.dart';
 import '../../services/projetos/fontes_base_service.dart';
 import '../../services/projetos/projeto_service.dart';
 import '../../theme/app_theme.dart';
-import 'fonte_alocacao_list_screen.dart';
 
 class FonteAlocacaoFormScreen extends StatefulWidget {
   final String? alocacaoId;
@@ -45,6 +44,7 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
   bool _isLoading = false;
   bool _isEditing = false;
   double _saldoDisponivel = 0;
+  double _totalAlocado = 0;
 
   @override
   void initState() {
@@ -67,14 +67,19 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // ⭐ CARREGAR FONTES COM SALDO
       _fontes = await _service.list();
+      
+      // ⭐ CARREGAR PROJETOS
       _projetos = await _projetoService.list();
 
+      // Se tiver fonteId, selecionar automaticamente
       if (widget.fonteId != null && _fontes.isNotEmpty) {
         _fonteId = widget.fonteId;
         await _calcularSaldo();
       }
 
+      // Se for edição, carregar dados
       if (_isEditing) {
         // TODO: Carregar alocação para edição
       }
@@ -92,20 +97,19 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
 
   Future<void> _calcularSaldo() async {
     if (_fonteId == null) {
-      setState(() => _saldoDisponivel = 0);
+      setState(() {
+        _saldoDisponivel = 0;
+        _totalAlocado = 0;
+      });
       return;
     }
 
     try {
       final fonte = await _service.getById(_fonteId!);
       if (fonte != null) {
-        final alocacoes = await _service.getAlocacoes(_fonteId!);
-        double totalAlocado = 0;
-        for (var aloc in alocacoes) {
-          totalAlocado += aloc.valorAlocado;
-        }
         setState(() {
-          _saldoDisponivel = fonte.valorRecurso - totalAlocado;
+          _saldoDisponivel = fonte.saldo;
+          _totalAlocado = fonte.totalAlocado;
         });
       }
     } catch (e) {
@@ -119,11 +123,25 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final valorAlocado = double.parse(_valorController.text);
+      
+      // ⭐ VERIFICAR SALDO
+      if (valorAlocado > _saldoDisponivel) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Saldo insuficiente. Disponível: R\$ ${_saldoDisponivel.toStringAsFixed(2)}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final data = {
         'fonte_alocacao': _fonteId,
         'destino_alocacao': _destinoId,
         'descricao': _descricaoController.text,
-        'valor_alocado': double.parse(_valorController.text),
+        'valor_alocado': valorAlocado,
         'data_alocacao': _dataAlocacaoController.text.isNotEmpty
             ? DateTime.parse(_dataAlocacaoController.text).toIso8601String()
             : null,
@@ -191,7 +209,7 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
-                            // Fonte de Recurso
+                            // ⭐ FONTE DE RECURSO
                             DropdownButtonFormField<String>(
                               value: _fonteId,
                               decoration: const InputDecoration(
@@ -201,7 +219,9 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                               items: _fontes.map((fonte) {
                                 return DropdownMenuItem(
                                   value: fonte.id,
-                                  child: Text(fonte.descricao),
+                                  child: Text(
+                                    '${fonte.descricao} (Saldo: R\$ ${fonte.saldo.toStringAsFixed(2)})'
+                                  ),
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -219,46 +239,38 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Saldo Disponível
+                            // ⭐ RESUMO DA FONTE
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: _saldoDisponivel > 0
-                                    ? Colors.green.withOpacity(0.1)
-                                    : Colors.red.withOpacity(0.1),
+                                color: Colors.blue.withOpacity(0.05),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: _saldoDisponivel > 0
-                                      ? Colors.green
-                                      : Colors.red,
-                                  width: 1,
-                                ),
+                                border: Border.all(color: Colors.blue.withOpacity(0.2)),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 children: [
-                                  const Text(
-                                    'Saldo Disponível:',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  _buildInfoItem(
+                                    'Total',
+                                    'R\$ ${(_totalAlocado + _saldoDisponivel).toStringAsFixed(2)}',
+                                    Colors.blue,
                                   ),
-                                  Text(
+                                  _buildInfoItem(
+                                    'Alocado',
+                                    'R\$ ${_totalAlocado.toStringAsFixed(2)}',
+                                    Colors.orange,
+                                  ),
+                                  _buildInfoItem(
+                                    'Disponível',
                                     'R\$ ${_saldoDisponivel.toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      color: _saldoDisponivel > 0
-                                          ? Colors.green
-                                          : Colors.red,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
+                                    _saldoDisponivel > 0 ? Colors.green : Colors.red,
                                   ),
                                 ],
                               ),
                             ),
                             const SizedBox(height: 16),
 
-                            // Destino (Projeto)
+                            // ⭐ DESTINO (PROJETO)
                             DropdownButtonFormField<String>(
                               value: _destinoId,
                               decoration: const InputDecoration(
@@ -281,7 +293,7 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Descrição
+                            // ⭐ DESCRIÇÃO
                             TextFormField(
                               controller: _descricaoController,
                               decoration: const InputDecoration(
@@ -297,13 +309,14 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Valor Alocado
+                            // ⭐ VALOR ALOCADO
                             TextFormField(
                               controller: _valorController,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Valor Alocado (R\$) *',
                                 border: OutlineInputBorder(),
                                 prefixText: 'R\$ ',
+                                helperText: 'Disponível: R\$ ${_saldoDisponivel.toStringAsFixed(2)}',
                               ),
                               keyboardType: TextInputType.number,
                               validator: (value) {
@@ -322,7 +335,7 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Data de Alocação
+                            // ⭐ DATA DE ALOÇAÇÃO
                             TextFormField(
                               controller: _dataAlocacaoController,
                               decoration: const InputDecoration(
@@ -335,7 +348,7 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Observações
+                            // ⭐ OBSERVAÇÕES
                             TextFormField(
                               controller: _obsController,
                               decoration: const InputDecoration(
@@ -371,6 +384,29 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: AppTheme.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 

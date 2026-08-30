@@ -10,14 +10,14 @@ import '../../services/projetos/disparo_service.dart';
 class ProjetoProvider extends ChangeNotifier {
   final ProjetoService _projetoService = ProjetoService();
 
-  List<ProjetoModel> _projetos = [];
-  ProjetoModel? _selectedProjeto;
+  List<Projeto> _projetos = [];
+  Projeto? _selectedProjeto;
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic> _filters = {};
 
-  List<ProjetoModel> get projetos => _projetos;
-  ProjetoModel? get selectedProjeto => _selectedProjeto;
+  List<Projeto> get projetos => _projetos;
+  Projeto? get selectedProjeto => _selectedProjeto;
   bool get isLoading => _isLoading;
   String? get error => _error;
   Map<String, dynamic> get filters => _filters;

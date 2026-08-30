@@ -4,7 +4,7 @@
 
 import 'meta_model.dart';
 
-class ProjetoModel {
+class Projeto {
   final String id;
   final String? descricao;
   final String? processo;
@@ -55,7 +55,7 @@ class ProjetoModel {
     STATUS_FINALIZADO: 'Finalizado',
   };
 
-  ProjetoModel({
+  Projeto({
     required this.id,
     this.descricao,
     this.processo,
@@ -81,8 +81,8 @@ class ProjetoModel {
     this.metas = const [],
   });
 
-  factory ProjetoModel.fromJson(Map<String, dynamic> json) {
-    return ProjetoModel(
+  factory Projeto.fromJson(Map<String, dynamic> json) {
+    return Projeto(
       id: json['id']?.toString() ?? '',
       descricao: json['descricao']?.toString(),
       processo: json['processo']?.toString(),
@@ -149,7 +149,7 @@ class ProjetoModel {
     };
   }
 
-  ProjetoModel copyWith({
+  Projeto copyWith({
     String? id,
     String? descricao,
     String? processo,
@@ -174,7 +174,7 @@ class ProjetoModel {
     DateTime? updatedAt,
     List<MetaModel>? metas,
   }) {
-    return ProjetoModel(
+    return Projeto(
       id: id ?? this.id,
       descricao: descricao ?? this.descricao,
       processo: processo ?? this.processo,

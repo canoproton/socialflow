@@ -28,7 +28,7 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
   
   List<FonteAlocacaoModel> _alocacoes = [];
   List<FontesBaseModel> _fontes = [];
-  List<ProjetoModel> _projetos = [];
+  List<Projeto> _projetos = [];
   FontesBaseModel? _fonteSelecionada;
   bool _isLoading = false;
   String? _error;
@@ -152,7 +152,7 @@ class _FonteAlocacaoListScreenState extends State<FonteAlocacaoListScreen> {
     if (projetoId.isEmpty) return 'Não definido';
     final projeto = _projetos.firstWhere(
       (p) => p.id == projetoId,
-      orElse: () => ProjetoModel(
+      orElse: () => Projeto(
         id: projetoId,
         descricao: 'Projeto não encontrado',
         statusProjeto: 'ORÇAMENTO',

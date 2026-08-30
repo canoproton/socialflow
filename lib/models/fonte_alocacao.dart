@@ -1,4 +1,4 @@
-import 'package:meu_backend/models/projetos/projeto_model.dart';
+import 'package:meu_backend/models/projetos/projeto_model.dart' as projeto;
 import 'fontes_base.dart';
 
 class FonteAlocacao {

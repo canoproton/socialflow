@@ -165,7 +165,7 @@ class _ProjetoListScreenState extends State<ProjetoListScreen> {
   // MÉTODO: CONFIRMAR EXCLUSÃO
   // ============================================
 
-  void _confirmDelete(BuildContext context, ProjetoModel projeto) {
+  void _confirmDelete(BuildContext context, Projeto projeto) {
     print('⚠️ [PROJETO_LIST] CONFIRMAR_EXCLUSAO - Projeto: ${projeto.descricao}');
     showDialog(
       context: context,
@@ -327,10 +327,10 @@ class _ProjetoListScreenState extends State<ProjetoListScreen> {
               ),
               items: [
                 const DropdownMenuItem(value: null, child: Text('Todos')),
-                ...ProjetoModel.statusOptions.map(
+                ...Projeto.statusOptions.map(
                   (status) => DropdownMenuItem(
                     value: status,
-                    child: Text(ProjetoModel.statusLabels[status] ?? status),
+                    child: Text(Projeto.statusLabels[status] ?? status),
                   ),
                 ),
               ],
@@ -467,12 +467,12 @@ class _ProjetoListScreenState extends State<ProjetoListScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.play_arrow,
-                    color: projeto.statusProjeto == ProjetoModel.STATUS_APROVADO 
+                    color: projeto.statusProjeto == Projeto.STATUS_APROVADO 
                         ? Colors.green 
                         : Colors.grey,
                   ),
                   onPressed: () {
-                    if (projeto.statusProjeto == ProjetoModel.STATUS_APROVADO) {
+                    if (projeto.statusProjeto == Projeto.STATUS_APROVADO) {
                       _executarProjeto(context, projeto.id);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(

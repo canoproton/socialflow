@@ -196,7 +196,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   // HEADER DO PROJETO
   // ============================================
 
-  Widget _buildHeader(ProjetoModel projeto) {
+  Widget _buildHeader(Projeto projeto) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -299,7 +299,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   // RESUMO FINANCEIRO (COM VALOR TOTAL APORTADO - Regra 7)
   // ============================================
 
-  Widget _buildFinancialSummary(ProjetoModel projeto) {
+  Widget _buildFinancialSummary(Projeto projeto) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -400,7 +400,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   // INFORMAÇÕES ADICIONAIS
   // ============================================
 
-  Widget _buildAdditionalInfo(ProjetoModel projeto) {
+  Widget _buildAdditionalInfo(Projeto projeto) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -493,7 +493,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   // RELACIONAMENTOS (Fontes, Contra Partida, Documentos)
   // ============================================
 
-  Widget _buildRelacionamentos(ProjetoModel projeto) {
+  Widget _buildRelacionamentos(Projeto projeto) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -693,7 +693,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   // METAS E ETAPAS
   // ============================================
 
-  Widget _buildMetasSection(ProjetoModel projeto) {
+  Widget _buildMetasSection(Projeto projeto) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -980,7 +980,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
   // BOTÕES DE AÇÃO
   // ============================================
 
-  Widget _buildActionButtons(ProjetoModel projeto) {
+  Widget _buildActionButtons(Projeto projeto) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -990,7 +990,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
           label: const Text('Editar'),
         ),
         const SizedBox(width: 12),
-        if (projeto.statusProjeto == ProjetoModel.STATUS_APROVADO)
+        if (projeto.statusProjeto == Projeto.STATUS_APROVADO)
           ElevatedButton.icon(
             onPressed: () {
               // TODO: Executar projeto (Regra 8)
@@ -1005,7 +1005,7 @@ class _ProjetoDetailScreenState extends State<ProjetoDetailScreen> {
               foregroundColor: Colors.white,
             ),
           ),
-        if (projeto.statusProjeto == ProjetoModel.STATUS_EXECUTANDO)
+        if (projeto.statusProjeto == Projeto.STATUS_EXECUTANDO)
           ElevatedButton.icon(
             onPressed: () {
               // TODO: Gerar PDF (Regra 14)

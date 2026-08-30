@@ -19,7 +19,7 @@ class DisparoService {
   /// - Cada etapa gera um Ticket (Regra 9)
   /// - Cada etapa gera um ItemLancamento (Regra 10)
   /// - Status do projeto muda para EXECUTANDO
-  Future<void> dispararTodasEtapas(ProjetoModel projeto) async {
+  Future<void> dispararTodasEtapas(Projeto projeto) async {
     print('📋 [DISPARO_SERVICE] DISPARAR_TODAS_ETAPAS - Projeto: ${projeto.id}');
 
     try {
@@ -50,7 +50,7 @@ class DisparoService {
       await _supabase
           .from('projetos')
           .update({
-            'status_projeto': ProjetoModel.STATUS_EXECUTANDO,
+            'status_projeto': Projeto.STATUS_EXECUTANDO,
             'atualizado_em': DateTime.now().toIso8601String(),
           })
           .eq('id', projeto.id);
@@ -73,7 +73,7 @@ class DisparoService {
   Future<void> _dispararEtapaIndividual({
     required EtapaModel etapa,
     required MetaModel meta,
-    required ProjetoModel projeto,
+    required Projeto projeto,
   }) async {
     print('📋 [DISPARO_SERVICE] DISPARAR_ETAPA - Etapa: ${etapa.id}');
 
@@ -121,7 +121,7 @@ class DisparoService {
   Future<String> _dispararParaTicket(
     EtapaModel etapa,
     MetaModel meta,
-    ProjetoModel projeto,
+    Projeto projeto,
   ) async {
     try {
       final response = await _supabase
@@ -176,7 +176,7 @@ Executor: ${etapa.executorId ?? 'Não definido'}
   Future<String> _dispararParaItemLancamento(
     EtapaModel etapa,
     MetaModel meta,
-    ProjetoModel projeto,
+    Projeto projeto,
   ) async {
     try {
       final response = await _supabase

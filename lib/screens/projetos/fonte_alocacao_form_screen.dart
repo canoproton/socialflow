@@ -38,7 +38,7 @@ class _FonteAlocacaoFormScreenState extends State<FonteAlocacaoFormScreen> {
   final ProjetoService _projetoService = ProjetoService();
   
   List<FontesBaseModel> _fontes = [];
-  List<ProjetoModel> _projetos = [];
+  List<Projeto> _projetos = [];
   String? _fonteId;
   String? _destinoId;
   bool _isLoading = false;

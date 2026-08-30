@@ -14,7 +14,7 @@ class ProjetoService {
   // LISTAR TODOS OS PROJETOS (SEM FILTROS)
   // ============================================
 
-  Future<List<ProjetoModel>> list() async {
+  Future<List<Projeto>> list() async {
     print('📋 [PROJETO_SERVICE] LIST - Listando todos os projetos');
 
     try {
@@ -24,7 +24,7 @@ class ProjetoService {
           .order('created_at', ascending: false);
 
       final result = (response as List)
-          .map((item) => ProjetoModel.fromJson(item))
+          .map((item) => Projeto.fromJson(item))
           .toList();
 
       print('✅ [PROJETO_SERVICE] LIST - Encontrados ${result.length} projetos');
@@ -39,7 +39,7 @@ class ProjetoService {
   // BUSCAR PROJETO POR ID
   // ============================================
 
-  Future<ProjetoModel?> getById(String id) async {
+  Future<Projeto?> getById(String id) async {
     print('📋 [PROJETO_SERVICE] GET_BY_ID - Buscando projeto ID: $id');
 
     try {
@@ -55,7 +55,7 @@ class ProjetoService {
       }
 
       print('✅ [PROJETO_SERVICE] GET_BY_ID - Projeto encontrado: ${response['descricao']}');
-      return ProjetoModel.fromJson(response);
+      return Projeto.fromJson(response);
     } catch (e) {
       print('❌ [PROJETO_SERVICE] GET_BY_ID - Erro: $e');
       throw Exception('Erro ao buscar projeto: $e');
@@ -66,7 +66,7 @@ class ProjetoService {
   // BUSCAR PROJETO COMPLETO (COM METAS E ETAPAS)
   // ============================================
 
-  Future<ProjetoModel> getCompleto(String id) async {
+  Future<Projeto> getCompleto(String id) async {
     print('📋 [PROJETO_SERVICE] GET_COMPLETO - Buscando projeto completo ID: $id');
 
     try {
@@ -131,7 +131,7 @@ class ProjetoService {
 
       print('✅ [PROJETO_SERVICE] GET_COMPLETO - Projeto: ${projeto.descricao}, Metas: ${metas.length}, Total: $totalMetas');
 
-      return ProjetoModel(
+      return Projeto(
         id: projeto.id,
         descricao: projeto.descricao,
         processo: projeto.processo,
@@ -166,7 +166,7 @@ class ProjetoService {
   // CRIAR PROJETO (APENAS PROJETO, SEM METAS)
   // ============================================
 
-  Future<ProjetoModel> create(Map<String, dynamic> data) async {
+  Future<Projeto> create(Map<String, dynamic> data) async {
     print('📋 [PROJETO_SERVICE] CREATE - Criando projeto');
 
     try {
@@ -181,7 +181,7 @@ class ProjetoService {
           .single();
 
       print('✅ [PROJETO_SERVICE] CREATE - Projeto criado: ${response['id']}');
-      return ProjetoModel.fromJson(response);
+      return Projeto.fromJson(response);
     } catch (e) {
       print('❌ [PROJETO_SERVICE] CREATE - Erro: $e');
       throw Exception('Erro ao criar projeto: $e');
@@ -192,7 +192,7 @@ class ProjetoService {
   // CRIAR PROJETO COMPLETO (COM METAS E ETAPAS) ⭐ REGRA 2
   // ============================================
 
-  Future<ProjetoModel> createCompleto(Map<String, dynamic> data) async {
+  Future<Projeto> createCompleto(Map<String, dynamic> data) async {
     print('📋 [PROJETO_SERVICE] CREATE_COMPLETO - Criando projeto com metas e etapas');
 
     try {
@@ -223,7 +223,7 @@ class ProjetoService {
           .select()
           .single();
 
-      final projeto = ProjetoModel.fromJson(response);
+      final projeto = Projeto.fromJson(response);
       print('✅ [PROJETO_SERVICE] CREATE_COMPLETO - Projeto criado: ${projeto.id}');
 
       // 5. Criar metas e etapas
@@ -287,7 +287,7 @@ class ProjetoService {
   // ATUALIZAR PROJETO (APENAS PROJETO)
   // ============================================
 
-  Future<ProjetoModel> update(String id, Map<String, dynamic> data) async {
+  Future<Projeto> update(String id, Map<String, dynamic> data) async {
     print('📋 [PROJETO_SERVICE] UPDATE - Atualizando projeto ID: $id');
 
     try {
@@ -302,7 +302,7 @@ class ProjetoService {
           .single();
 
       print('✅ [PROJETO_SERVICE] UPDATE - Projeto atualizado: $id');
-      return ProjetoModel.fromJson(response);
+      return Projeto.fromJson(response);
     } catch (e) {
       print('❌ [PROJETO_SERVICE] UPDATE - Erro: $e');
       throw Exception('Erro ao atualizar projeto: $e');
@@ -313,7 +313,7 @@ class ProjetoService {
   // ATUALIZAR PROJETO COMPLETO (COM METAS E ETAPAS) ⭐ REGRA 2
   // ============================================
 
-  Future<ProjetoModel> updateCompleto(String id, Map<String, dynamic> data) async {
+  Future<Projeto> updateCompleto(String id, Map<String, dynamic> data) async {
     print('📋 [PROJETO_SERVICE] UPDATE_COMPLETO - Atualizando projeto completo ID: $id');
 
     try {

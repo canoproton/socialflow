@@ -36,7 +36,7 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
   final _dataEntregaController = TextEditingController();
   final _valorEstimadoController = TextEditingController();
 
-  String _status = ProjetoModel.STATUS_ORCAMENTO;
+  String _status = Projeto.STATUS_ORCAMENTO;
   bool _isLoading = false;
 
   // ⭐ METAS DO PROJETO (Regra 2)
@@ -418,10 +418,10 @@ class _ProjetoFormScreenState extends State<ProjetoFormScreen> {
                       labelText: 'Status',
                       border: OutlineInputBorder(),
                     ),
-                    items: ProjetoModel.statusOptions.map((status) {
+                    items: Projeto.statusOptions.map((status) {
                       return DropdownMenuItem(
                         value: status,
-                        child: Text(ProjetoModel.statusLabels[status] ?? status),
+                        child: Text(Projeto.statusLabels[status] ?? status),
                       );
                     }).toList(),
                     onChanged: (value) => setState(() => _status = value!),

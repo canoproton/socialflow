@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/alocacao_provider.dart';
-import '../../providers/projeto_provider.dart';
+import '../../providers/projetos/projeto_provider.dart';
 import '../../models/fonte_alocacao.dart';
 
 class AlocacaoFormScreen extends StatefulWidget {
@@ -193,7 +193,7 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                   items: projetoProvider.projetos.map((projeto) {
                     return DropdownMenuItem(
                       value: projeto.id,
-                      child: Text(projeto.descricao),
+                      child: Text(projeto.descricao ?? 'Sem descrição'),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -226,7 +226,7 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                 TextFormField(
                   controller: _valorController,
                   decoration: InputDecoration(
-                    labelText: 'Valor Alocado (R$) *',
+                    labelText: 'Valor Alocado (R\$) *',
                     hintText: 'Ex: 85000.00',
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.attach_money),

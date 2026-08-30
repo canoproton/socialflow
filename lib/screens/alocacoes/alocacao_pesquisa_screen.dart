@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/alocacao_provider.dart';
-import '../../providers/projeto_provider.dart';
+import '../../providers/projetos/projeto_provider.dart';
 import '../../models/alocacao_pesquisa_filtro.dart';
 import 'alocacao_extrato_screen.dart';
 
@@ -147,7 +147,7 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
                           ...projetos.map((projeto) {
                             return DropdownMenuItem(
                               value: projeto.id,
-                              child: Text(projeto.descricao),
+                              child: Text(projeto.descricao ?? 'Sem descrição'),
                             );
                           }).toList(),
                         ],

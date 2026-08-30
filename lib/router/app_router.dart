@@ -19,6 +19,7 @@ import '../screens/projetos/fonte_alocacao_list_screen.dart';
 import '../screens/projetos/fonte_alocacao_form_screen.dart';
 import '../screens/projetos/contra_partida_list_screen.dart';
 import '../screens/projetos/contra_partida_form_screen.dart';
+import '../screens/alocacoes/alocacao_pesquisa_screen.dart';
 
 // ⭐ GERAIS
 import '../screens/auth/login_screen.dart';
@@ -178,7 +179,7 @@ final GoRouter appRouter = GoRouter(
               path: 'alocacoes',
               name: 'alocacoes',
               pageBuilder: (context, state) => const MaterialPage(
-                child: FonteAlocacaoListScreen(),
+                child: AlocacaoPesquisaScreen(),
               ),
             ),
             GoRoute(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/projeto_model.dart';
+import '../models/projetos/projeto_model.dart';
 import '../models/fonte_alocacao.dart';
-import '../services/projeto_service.dart';
+import '../services/projetos/projeto_service.dart';
 import '../services/fontes_base_service.dart';
 
 class ProjetoProvider extends ChangeNotifier {

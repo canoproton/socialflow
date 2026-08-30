@@ -55,7 +55,7 @@ class _AlocacaoListScreenState extends State<AlocacaoListScreen> {
     // Filtro por fonte
     if (_filtroFonteId != 'Todas as fontes') {
       alocacoesFiltradas = alocacoesFiltradas
-          .where((a) => a.fonte_alocacao == _filtroFonteId)
+          .where((a) => a.fonte_alocacao_id == _filtroFonteId)
           .toList();
     }
 
@@ -78,14 +78,14 @@ class _AlocacaoListScreenState extends State<AlocacaoListScreen> {
     final Map<String, double> totalPorFonte = {};
     final Map<String, String> nomePorFonte = {};
     for (var alocacao in alocacoesFiltradas) {
-      totalPorFonte[alocacao.fonte_alocacao] = 
-          (totalPorFonte[alocacao.fonte_alocacao] ?? 0) + alocacao.valor_alocado;
+      totalPorFonte[alocacao.fonte_alocacao_id] = 
+          (totalPorFonte[alocacao.fonte_alocacao_id] ?? 0) + alocacao.valor_alocado;
       
       // Busca o nome da fonte
       final fonte = fontes.firstWhere(
-        (f) => f.id == alocacao.fonte_alocacao,
+        (f) => f.id == alocacao.fonte_alocacao_id,
         orElse: () => FontesBase(
-          id: alocacao.fonte_alocacao,
+          id: alocacao.fonte_alocacao_id,
           descricao: 'Fonte não identificada',
           entidade: '',
           valor_recurso: 0,
@@ -99,10 +99,10 @@ class _AlocacaoListScreenState extends State<AlocacaoListScreen> {
     // ✅ Agrupa alocações por fonte
     final Map<String, List<FonteAlocacao>> alocacoesPorFonte = {};
     for (var alocacao in alocacoesFiltradas) {
-      if (!alocacoesPorFonte.containsKey(alocacao.fonte_alocacao)) {
-        alocacoesPorFonte[alocacao.fonte_alocacao] = [];
+      if (!alocacoesPorFonte.containsKey(alocacao.fonte_alocacao_id)) {
+        alocacoesPorFonte[alocacao.fonte_alocacao_id] = [];
       }
-      alocacoesPorFonte[alocacao.fonte_alocacao]!.add(alocacao);
+      alocacoesPorFonte[alocacao.fonte_alocacao_id]!.add(alocacao);
     }
 
     // ✅ Calcula totais gerais

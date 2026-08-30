@@ -184,8 +184,8 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                   ),
                   items: projetoProvider.projetos.map((projeto) {
                     return DropdownMenuItem(
-                      value: projeto.id,
-                      child: Text(projeto.descricao),
+                      value: projeto?.id ?? '',
+                      child: Text(projeto?.descricao ?? 'Sem descrição'),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -220,7 +220,7 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
                 TextFormField(
                   controller: _valorController,
                   decoration: InputDecoration(
-                    labelText: 'Valor Alocado (R$) *',
+                    labelText: 'Valor Alocado (R\$) *',
                     hintText: 'Ex: 85000.00',
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.attach_money),

@@ -93,7 +93,7 @@ class _AlocacaoListScreenState extends State<AlocacaoListScreen> {
           data_aprovacao: DateTime.now(),
         ),
       );
-      nomePorFonte[alocacao.fonte_alocacao] = fonte.descricao ?? 'Fonte não identificada';
+      nomePorFonte[alocacao.fonte_alocacao_id] = fonte.descricao ?? 'Fonte não identificada';
     }
 
     // ✅ Agrupa alocações por fonte
@@ -290,7 +290,7 @@ class _AlocacaoListScreenState extends State<AlocacaoListScreen> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                'Destino: ${alocacao.projeto?.descricao ?? alocacao.destino_alocao}',
+                                                'Destino: ${alocacao.projeto?.descricao ?? alocacao.destino_alocao_id}',
                                                 style: const TextStyle(fontSize: 12),
                                               ),
                                               Text(

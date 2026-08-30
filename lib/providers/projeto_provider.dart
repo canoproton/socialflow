@@ -31,8 +31,8 @@ class ProjetoProvider extends ChangeNotifier {
         final totalAportado = alocacoes.fold(0.0, (sum, a) => sum + a.valor_alocado);
         
         // ✅ CORRETO: Atualiza o projeto com o valor calculado
-        projeto.valor_total_aportado = totalAportado;
-        projeto.saldo_projeto = totalAportado - projeto.valor_total_metas;
+        projeto.valorTotalAportado = totalAportado;
+        projeto.saldoProjeto = totalAportado - (projeto.valorTotalMetas ?? 0);
       }
 
       // Aplica filtros
@@ -45,7 +45,7 @@ class ProjetoProvider extends ChangeNotifier {
         ).toList();
       }
       if (status != null && status.isNotEmpty) {
-        filtered = filtered.where((p) => p.status_projeto == status).toList();
+        filtered = filtered.where((p) => p.statusProjeto == status).toList();
       }
 
       _projetos = filtered;
@@ -61,7 +61,7 @@ class ProjetoProvider extends ChangeNotifier {
 
   Future<void> updateProjeto(Projeto projeto) async {
     try {
-      await _projetoService.update(projeto);
+      await _projetoService.update(projeto.id, projeto.toJson());
       await loadProjetos();
     } catch (e) {
       _error = e.toString();

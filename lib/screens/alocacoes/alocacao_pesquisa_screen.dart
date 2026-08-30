@@ -49,7 +49,13 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await context.read<AlocacaoProvider>().pesquisarFontes(filtro);
+      await context.read<AlocacaoProvider>().pesquisarFontes(
+        filtro.text,  // ← String, não objeto
+        apenasComSaldo: apenasComSaldo,
+        dataInicio: dataInicio,
+        dataFim: dataFim,
+        projetoId: projetoId,
+      );
       print('✅ [PESQUISA] Resultados: ${context.read<AlocacaoProvider>().resultados.length}');
     } catch (e) {
       print('❌ [PESQUISA] Erro: $e');
@@ -324,10 +330,9 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
                         itemCount: provider.resultados.length,
                         itemBuilder: (context, index) {
                           final item = provider.resultados[index];
-                          final fonte = item['fonte'];
-                          final saldo = item['saldo'] as double;
-                          final totalAlocado = item['total_alocado'] as double;
-
+                          final fonte = item.fonte;              // ← Usar .fonte, não ['fonte']
+                          final saldo = item.saldo;              // ← Usar .saldo, não ['saldo']
+                          final totalAlocado = item.totalAlocado; // ← Usar .totalAlocado, não ['total_alocado']
                           return Card(
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(

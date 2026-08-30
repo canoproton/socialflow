@@ -29,7 +29,7 @@ class _AlocacaoExtratoScreenState extends State<AlocacaoExtratoScreen> {
     });
 
     try {
-      await context.read<AlocacaoProvider>().getExtrato(widget.fonteId);
+      await context.read<AlocacaoProvider>().carregarExtrato(widget.fonteId);
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() {
@@ -62,7 +62,7 @@ class _AlocacaoExtratoScreenState extends State<AlocacaoExtratoScreen> {
               ? _buildErrorWidget()
               : extratoData == null
                   ? const Center(child: Text('Nenhum dado encontrado'))
-                  : _buildExtrato(extratoData),
+                  : _buildExtrato(extratoData), // extratoData já é List<FonteAlocacao>
     );
   }
 

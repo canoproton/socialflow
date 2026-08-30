@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/alocacao_provider.dart';
-import '../../providers/projetos/projeto_provider.dart';
 import '../../models/fonte_alocacao.dart';
 
 class AlocacaoFormScreen extends StatefulWidget {
   final String fonteId;
+  final String? alocacaoId;
 
-  const AlocacaoFormScreen({Key? key, required this.fonteId}) : super(key: key);
+  const AlocacaoFormScreen({
+    Key? key,
+    required this.fonteId,
+    this.alocacaoId,
+  }) : super(key: key);
 
   @override
   State<AlocacaoFormScreen> createState() => _AlocacaoFormScreenState();
@@ -15,358 +19,327 @@ class AlocacaoFormScreen extends StatefulWidget {
 
 class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  String? _projetoSelecionado;
   final _descricaoController = TextEditingController();
   final _valorController = TextEditingController();
+  final _dataController = TextEditingController();
   final _obsController = TextEditingController();
-  DateTime? _dataAlocacao;
-  
-  bool _isLoading = false;
+
+  FontesBase? _fonte;
+  List<FonteAlocacao> _extrato = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _dataAlocacao = DateTime.now();
-    _loadData();
+    _carregarDados();
   }
 
-  Future<void> _loadData() async {
-    final alocacaoProvider = context.read<AlocacaoProvider>();
-    final projetoProvider = context.read<ProjetoProvider>();
-    
-    await alocacaoProvider.getExtrato(widget.fonteId);
-    await projetoProvider.loadProjetos();
+  Future<void> _carregarDados() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final alocacaoProvider = context.read<AlocacaoProvider>();
+      
+      // 🔧 CORREÇÃO 1: Carregar extrato com método correto
+      await alocacaoProvider.carregarExtrato(widget.fonteId);
+      
+      // 🔧 CORREÇÃO 4: Buscar fonte pelo ID
+      _fonte = await alocacaoProvider.getFonteBase(widget.fonteId);
+      _extrato = alocacaoProvider.extratoAtual;
+
+      // Se tiver alocacaoId, carregar dados para edição
+      if (widget.alocacaoId != null) {
+        await alocacaoProvider.selecionarAlocacao(widget.alocacaoId!);
+        final alocacao = alocacaoProvider.alocacaoSelecionada;
+        if (alocacao != null) {
+          _descricaoController.text = alocacao.descricao ?? '';
+          _valorController.text = alocacao.valor_alocado?.toString() ?? '';
+          _dataController.text = alocacao.data_alocacao?.toIso8601String().split('T').first ?? '';
+          _obsController.text = alocacao.obs ?? '';
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar dados: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
   void dispose() {
     _descricaoController.dispose();
     _valorController.dispose();
+    _dataController.dispose();
     _obsController.dispose();
     super.dispose();
   }
 
-  Future<void> _save() async {
+  Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_projetoSelecionado == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecione um projeto destino')),
-      );
-      return;
-    }
-    if (_dataAlocacao == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecione a data de alocação')),
-      );
-      return;
-    }
 
     setState(() => _isLoading = true);
 
     try {
-      final provider = context.read<AlocacaoProvider>();
-      final extrato = provider.extratoAtual;
-      final saldoAtual = extrato?['saldo_atual'] as double? ?? 0;
-
-      final valor = double.parse(_valorController.text);
-      
-      if (valor > saldoAtual) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Valor excede o saldo disponível (${_formatMoney(saldoAtual)})'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() => _isLoading = false);
-        return;
-      }
-
       final alocacao = FonteAlocacao(
-        id: '',
+        id: widget.alocacaoId,
         fonte_alocacao_id: widget.fonteId,
-        destino_alocao_id: _projetoSelecionado!,
         descricao: _descricaoController.text,
-        valor_alocado: valor,
-        saldo_recurso: saldoAtual - valor,
-        data_alocacao: _dataAlocacao!,
+        valor_alocado: double.tryParse(_valorController.text.replaceAll(',', '.')),
+        data_alocacao: _dataController.text.isNotEmpty
+            ? DateTime.parse(_dataController.text)
+            : DateTime.now(),
         obs: _obsController.text.isNotEmpty ? _obsController.text : null,
       );
 
-      await context.read<AlocacaoProvider>().createAlocacao(alocacao);
+      // 🔧 CORREÇÃO 3: Salvar com método correto
+      await context.read<AlocacaoProvider>().salvarAlocacao(alocacao);
 
       if (mounted) {
         Navigator.pop(context, true);
-      }
-    } catch (e) {
-      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          const SnackBar(content: Text('Alocação salva com sucesso!')),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao salvar: $e')),
+      );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      setState(() => _isLoading = false);
     }
+  }
+
+  String _formatMoney(double? value) {
+    if (value == null) return 'R\$ 0,00';
+    return 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final alocacaoProvider = context.watch<AlocacaoProvider>();
-    final projetoProvider = context.watch<ProjetoProvider>();
-    
-    final extrato = alocacaoProvider.extratoAtual;
-    final fonte = extrato?['fonte'];
-    final saldoAtual = extrato?['saldo_atual'] as double? ?? 0;
-    final totalAlocado = extrato?['total_alocado'] as double? ?? 0;
+    // 🔧 CORREÇÃO 5: Usar _fonte (objeto) para acessar propriedades
+    final saldoAtual = _extrato.fold<double>(0, (sum, a) => sum + (a.saldo_recurso ?? 0));
+    final totalAlocado = _extrato.fold<double>(0, (sum, a) => sum + (a.valor_alocado ?? 0));
+    final valorRecurso = _fonte?.valor_recurso ?? 0;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nova Alocação'),
-        backgroundColor: Colors.blue[800],
-        foregroundColor: Colors.white,
+        title: Text(widget.alocacaoId != null ? 'Editar Alocação' : 'Nova Alocação'),
+        actions: [
+          if (widget.alocacaoId != null)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _confirmarExclusao,
+            ),
+        ],
       ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextFormField(
-                  initialValue: fonte?.entidade ?? 'Carregando...',
-                  readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Fonte de Recurso *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.account_balance),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          label: 'Total',
-                          value: _formatMoney(fonte?.valor_recurso ?? 0),
-                          color: Colors.blue[700],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          label: 'Alocado',
-                          value: _formatMoney(totalAlocado),
-                          color: Colors.green[700],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          label: 'Disponível',
-                          value: _formatMoney(saldoAtual),
-                          color: saldoAtual > 0 ? Colors.green[700] : Colors.red[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                DropdownButtonFormField<String>(
-                  value: _projetoSelecionado,
-                  decoration: const InputDecoration(
-                    labelText: 'Destino (Projeto) *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.folder),
-                  ),
-                  items: projetoProvider.projetos.map((projeto) {
-                    return DropdownMenuItem(
-                      value: projeto.id,
-                      child: Text(projeto.descricao ?? 'Sem descrição'),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => _projetoSelecionado = value);
-                  },
-                  validator: (value) {
-                    if (value == null) return 'Selecione um projeto';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _descricaoController,
-                  decoration: const InputDecoration(
-                    labelText: 'Descrição *',
-                    hintText: 'Ex: Aporte para fase inicial',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.description),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Digite uma descrição';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _valorController,
-                  decoration: InputDecoration(
-                    labelText: 'Valor Alocado (R\$) *',
-                    hintText: 'Ex: 85000.00',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.attach_money),
-                    helperText: 'Disponível: ${_formatMoney(saldoAtual)}',
-                    helperStyle: TextStyle(
-                      color: saldoAtual > 0 ? Colors.green : Colors.red,
-                    ),
-                  ),
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Digite o valor';
-                    }
-                    final valor = double.tryParse(value);
-                    if (valor == null || valor <= 0) {
-                      return 'Digite um valor válido';
-                    }
-                    if (valor > saldoAtual) {
-                      return 'Valor excede o saldo disponível (${_formatMoney(saldoAtual)})';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _dataAlocacao ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2030),
-                    );
-                    if (date != null) {
-                      setState(() => _dataAlocacao = date);
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Data de Alocação *',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.calendar_today),
-                    ),
-                    child: Text(
-                      _dataAlocacao != null
-                          ? '${_dataAlocacao!.day.toString().padLeft(2, '0')}/${_dataAlocacao!.month.toString().padLeft(2, '0')}/${_dataAlocacao!.year}'
-                          : 'Selecione uma data',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _obsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Observações',
-                    hintText: 'Informações adicionais sobre a alocação',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.comment),
-                  ),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 32),
-
-                Row(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: ListView(
                   children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[300],
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                    // Informações da Fonte
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.account_balance),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _fonte?.entidade ?? 'Carregando...',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildInfoItem('Total', _formatMoney(valorRecurso)),
+                                _buildInfoItem('Alocado', _formatMoney(totalAlocado)),
+                                _buildInfoItem('Saldo', _formatMoney(saldoAtual)),
+                              ],
+                            ),
+                          ],
                         ),
-                        child: const Text('Cancelar'),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _save,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue[800],
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Salvar'),
+                    const SizedBox(height: 16),
+
+                    // Descrição
+                    TextFormField(
+                      controller: _descricaoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Descrição',
+                        border: OutlineInputBorder(),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, informe uma descrição';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Valor
+                    TextFormField(
+                      controller: _valorController,
+                      decoration: const InputDecoration(
+                        labelText: 'Valor Alocado',
+                        border: OutlineInputBorder(),
+                        prefixText: 'R\$ ',
+                      ),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, informe o valor';
+                        }
+                        final valor = double.tryParse(value.replaceAll(',', '.'));
+                        if (valor == null) {
+                          return 'Valor inválido';
+                        }
+                        if (valor <= 0) {
+                          return 'O valor deve ser maior que zero';
+                        }
+                        if (valor > saldoAtual) {
+                          return 'Valor excede o saldo disponível (${_formatMoney(saldoAtual)})';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Data
+                    TextFormField(
+                      controller: _dataController,
+                      decoration: const InputDecoration(
+                        labelText: 'Data da Alocação',
+                        border: OutlineInputBorder(),
+                        suffixIcon: Icon(Icons.calendar_today),
+                      ),
+                      readOnly: true,
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2030),
+                        );
+                        if (date != null) {
+                          _dataController.text =
+                              '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                        }
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, selecione uma data';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Observações
+                    TextFormField(
+                      controller: _obsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Observações',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Botões
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancelar'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _salvar,
+                            child: const Text('Salvar'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildSummaryCard({
-    required String label,
-    required String value,
-    Color? color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+  Widget _buildInfoItem(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmarExclusao() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar Exclusão'),
+        content: const Text('Tem certeza que deseja excluir esta alocação?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Excluir'),
           ),
         ],
       ),
     );
-  }
 
-  String _formatMoney(double value) {
-    return 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}';
+    if (confirm == true && widget.alocacaoId != null) {
+      setState(() => _isLoading = true);
+      try {
+        await context.read<AlocacaoProvider>().removerAlocacao(widget.alocacaoId!);
+        if (mounted) {
+          Navigator.pop(context, true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Alocação removida com sucesso!')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao remover: $e')),
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }

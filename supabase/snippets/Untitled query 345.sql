@@ -1,1 +1,1 @@
-select * from fontes_base;
+SELECT * FROM fontes_base WHERE entidade ILIKE '%bolso%';

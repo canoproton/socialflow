@@ -18,7 +18,8 @@ class AlocacaoService {
       
       // Filtro por entidade
       if (filtro.entidade != null && filtro.entidade!.isNotEmpty) {
-        query = query.ilike('entidade', '%${filtro.entidade}%');
+        query = query.or('descricao.ilike.%${filtro.entidade}%,entidade.ilike.%${filtro.entidade}%');
+      }
         print('🔍 [ALOCACAO_SERVICE] Filtro entidade: ${filtro.entidade}');
       }
 

@@ -37,7 +37,7 @@ class AlocacaoService {
       final alocacoesResult = await supabase
           .from('fonte_alocacao')
           .select('*')
-          .filter('fonte_alocacao_id', 'in', '(${fontes.map((f) => "'${f.id}'").join(',')})');
+          .filter('fonte_alocacao', 'in', '(${fontes.map((f) => "'${f.id}'").join(',')})');
 
       final alocacoes = alocacoesResult.map((data) => FonteAlocacao.fromJson(data)).toList();
 

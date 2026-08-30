@@ -67,6 +67,7 @@ class _AlocacaoFormScreenState extends State<AlocacaoFormScreen> {
     try {
       final alocacao = FonteAlocacao(
         id: '',
+        saldo_recurso: 0,
         fonte_alocacao_id: widget.fonteId,
         destino_alocao_id: _projetoSelecionado!,
         descricao: _descricaoController.text,

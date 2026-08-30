@@ -343,7 +343,7 @@ class _FonteDetalheScreenState extends State<FonteDetalheScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Projeto: ${alocacao.projeto?.descricao ?? alocacao.destino_alocao}',
+                    'Projeto: ${alocacao.projeto?.descricao ?? alocacao.destino_alocao_id}',
                     style: const TextStyle(fontSize: 12),
                   ),
                   Text(

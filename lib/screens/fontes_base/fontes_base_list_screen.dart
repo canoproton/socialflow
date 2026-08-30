@@ -103,7 +103,7 @@ class _FontesBaseListScreenState extends State<FontesBaseListScreen> {
                               itemBuilder: (context, index) {
                                 final fonte = fontes[index];
                                 final alocacoesFonte = alocacoes
-                                    .where((a) => a.fonte_alocacao == fonte.id)
+                                    .where((a) => a.fonte_alocacao_id == fonte.id)
                                     .toList();
                                 final totalAlocadoFonte = alocacoesFonte
                                     .fold(0.0, (sum, a) => sum + a.valor_alocado);

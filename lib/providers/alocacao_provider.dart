@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/fonte_alocacao.dart';
 import '../models/alocacao_pesquisa_filtro.dart';
+import '../models/fontes_base.dart';
 import '../services/alocacao_service.dart';
 
 class AlocacaoProvider extends ChangeNotifier {

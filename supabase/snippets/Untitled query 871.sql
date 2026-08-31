@@ -1,7 +1,8 @@
--- Verificar se existe uma coluna chamada 'fonte_id' ou similar
+-- Verificar TODAS as colunas da tabela fonte_alocacao
 SELECT 
-    column_name
+    column_name,
+    data_type,
+    is_nullable
 FROM information_schema.columns 
 WHERE table_name = 'fonte_alocacao'
-    AND column_name LIKE '%fonte%'
-ORDER BY column_name;
+ORDER BY ordinal_position;

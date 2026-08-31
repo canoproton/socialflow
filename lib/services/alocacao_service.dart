@@ -39,22 +39,18 @@ class AlocacaoService {
         return [];
       }
 
-      // 2. Buscar alocações - ✅ CORREÇÃO: sem aspas simples nos UUIDs
-      final ids = fontes.map((f) => f['id']).join(',');
-      print('🔍 [ALOCACAO_SERVICE] IDs das fontes: $ids');
+      // 2. Buscar alocações - ✅ CORREÇÃO: usar select simples + filter
+      final ids = fontes.map((f) => f['id'] as String).toList();
+      final idsStr = ids.join(',');
+      print('🔍 [ALOCACAO_SERVICE] IDs das fontes: $idsStr');
 
+      // ✅ Buscar alocações com select simples (sem relacionamento problemático)
       final alocacoesResult = await supabase
           .from('fonte_alocacao')
-          .select('''
-            *,
-            fonte:fontes_base!fonte_alocacao_id(*),
-            destino:projeto!destino_alocao_id(*)
-          ''')
-          .filter(
-            'fonte_alocacao_id',
-            'in',
-            '($ids)' // ✅ SEM aspas simples
-          );
+          .select('*')
+          .filter('fonte_alocacao_id', 'in', '($idsStr)');
+
+      print('🔍 [ALOCACAO_SERVICE] Alocações encontradas: ${alocacoesResult.length}');
 
       // 3. Processar e agrupar resultados
       final Map<String, List<FonteAlocacao>> alocacoesPorFonte = {};
@@ -79,6 +75,8 @@ class AlocacaoService {
           0, (sum, a) => sum + (a.valor_alocado ?? 0)
         );
         final saldo = (fonte.valor_recurso ?? 0) - totalAlocado;
+
+        print('📊 Fonte: ${fonte.descricao} - Total: ${fonte.valor_recurso} - Alocado: $totalAlocado - Saldo: $saldo');
 
         // Aplicar filtro de saldo
         if (apenasComSaldo && saldo <= 0) {
@@ -141,7 +139,7 @@ class AlocacaoService {
         }
       }
 
-      print('✅ [PESQUISA] Resultados: ${resultados.length}');
+      print('✅ [PESQUISA] Resultados finais: ${resultados.length}');
       return resultados;
     } catch (e) {
       print('❌ [ALOCACAO_SERVICE] Erro ao pesquisar fontes: $e');
@@ -156,10 +154,7 @@ class AlocacaoService {
 
       final result = await supabase
           .from('fonte_alocacao')
-          .select('''
-            *,
-            destino:projeto!destino_alocao_id(*)
-          ''')
+          .select('*')
           .eq('fonte_alocacao_id', fonteId)
           .order('data_alocacao', ascending: true);
 
@@ -202,11 +197,7 @@ class AlocacaoService {
 
       final result = await supabase
           .from('fonte_alocacao')
-          .select('''
-            *,
-            fonte:fontes_base!fonte_alocacao_id(*),
-            destino:projeto!destino_alocao_id(*)
-          ''')
+          .select('*')
           .eq('id', id)
           .single();
 
@@ -237,6 +228,8 @@ class AlocacaoService {
   /// Busca uma fonte base pelo ID
   Future<FontesBase?> getFonteBaseById(String id) async {
     try {
+      print('📋 [FONTES_BASE_SERVICE] GET_BY_ID - ID: $id');
+
       final result = await supabase
           .from('fontes_base')
           .select('*')

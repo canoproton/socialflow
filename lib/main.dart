@@ -4,8 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/operacional/contato_provider.dart';
 import 'providers/operacional/empresa_provider.dart';
 import 'providers/projetos/projeto_provider.dart';
-import 'providers/alocacao_provider.dart'; // ✅ DEVE ESTAR IMPORTADO
-import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -36,13 +34,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ContatoProvider()),
         // ⭐ PROVIDER DO PROJETOS
         ChangeNotifierProvider(create: (_) => ProjetoProvider()),
-        // ⭐ PROVIDER DA ALOCAÇÃO
-        ChangeNotifierProvider(create: (_) => AlocacaoProvider()),
       ],
       child: MaterialApp.router(
         title: 'SocialFlow',
         theme: AppTheme.lightTheme,
-        routerConfig: appRouter,
+        routerConfig: AppRouter.router,
         debugShowCheckedModeBanner: false,
       ),
     );

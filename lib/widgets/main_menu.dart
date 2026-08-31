@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../theme/app_theme.dart';
 
 class MainMenu extends StatelessWidget {
-  const MainMenu({super.key});
+  const MainMenu({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -13,17 +12,13 @@ class MainMenu extends StatelessWidget {
         children: [
           DrawerHeader(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: Colors.blue[800],
             ),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Text(
+                Text(
                   'SocialFlow',
                   style: TextStyle(
                     color: Colors.white,
@@ -31,115 +26,99 @@ class MainMenu extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   'Sistema de Gestão',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white70,
                     fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
-          _buildMenuItem(context, Icons.dashboard, 'Dashboard', '/'),
-          const Divider(),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              'MÓDULOS',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textLight,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          _buildMenuItem(context, Icons.people, 'Usuários', '/usuarios', true),
-          // ⭐ PROJETOS (com submenu)
           _buildMenuItem(
             context,
-            Icons.folder,
-            'Projetos',
-            '/projetos',
+            icon: Icons.home,
+            title: 'Início',
+            route: '/home',
           ),
-          // FONTES DE RECURSOS (com submenu)
+          _buildDivider(),
+          _buildSectionHeader('Módulos'),
           _buildMenuItem(
             context,
-            Icons.attach_money,
-            'Fontes de Recursos',
-            '/projetos/fontes',
+            icon: Icons.people,
+            title: 'Operacional',
+            route: '/operacional',
           ),
           _buildMenuItem(
             context,
-            Icons.assignment,
-            'Alocações',
-            '/projetos/fontes/alocacoes',
+            icon: Icons.folder,
+            title: 'Projetos',
+            route: '/projetos',
+          ),
+          // ✅ NOVO ITEM: Fontes de Recursos
+          _buildMenuItem(
+            context,
+            icon: Icons.account_balance,
+            title: 'Fontes de Recursos',
+            route: '/fontes',
+          ),
+          _buildDivider(),
+          _buildSectionHeader('Configurações'),
+          _buildMenuItem(
+            context,
+            icon: Icons.person,
+            title: 'Perfil',
+            route: '/perfil',
           ),
           _buildMenuItem(
             context,
-            Icons.swap_horiz,
-            'Contra Partidas',
-            '/projetos/contra-partidas',
+            icon: Icons.logout,
+            title: 'Sair',
+            route: '/logout',
           ),
-          _buildMenuItem(context, Icons.checklist, 'Tarefas', '/tarefas', true),
-          
-          // ⭐ OPERACIONAL - SUBMENU
-          _buildSubmenuItem(context),
-          
-          _buildMenuItem(context, Icons.account_balance, 'Contabilidade', '/contabilidade', true),
-          _buildMenuItem(context, Icons.attach_money, 'Financeiro', '/financeiro', true),
-          _buildMenuItem(context, Icons.folder_open, 'Documentos', '/documentos', true),
-          _buildMenuItem(context, Icons.settings_overscan, 'IA', '/ia', true),
-          const Divider(),
-          _buildMenuItem(context, Icons.settings, 'Configurações', '/configuracoes', true),
         ],
       ),
     );
   }
 
-  Widget _buildSubmenuItem(BuildContext context) {
-    return ExpansionTile(
-      leading: Icon(Icons.business_center, color: AppTheme.primaryColor),
-      title: const Text('Operacional'),
-      children: [
-        _buildMenuItem(context, Icons.business, 'Empresas', '/operacional/empresas'),
-        _buildMenuItem(context, Icons.people, 'Contatos', '/operacional/contatos'),
-      ],
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String route,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.blue[800]),
+      title: Text(title),
+      onTap: () {
+        Navigator.pop(context); // Fecha o drawer
+        if (route == '/logout') {
+          // TODO: Implementar logout
+          context.go('/login');
+        } else {
+          context.go(route);
+        }
+      },
     );
   }
 
-  Widget _buildMenuItem(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String route, [
-    bool isDisabled = false,
-  ]) {
-    final isActive = !isDisabled &&
-        (GoRouterState.of(context).uri.path == route ||
-            (route != '/' &&
-                GoRouterState.of(context).uri.path.startsWith(route)));
+  Widget _buildDivider() {
+    return const Divider(height: 1, indent: 16, endIndent: 16);
+  }
 
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isDisabled
-            ? AppTheme.textLight
-            : (isActive ? AppTheme.primaryColor : AppTheme.textSecondary),
-      ),
-      title: Text(
-        label,
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, top: 8, bottom: 4),
+      child: Text(
+        title,
         style: TextStyle(
-          color: isDisabled
-              ? AppTheme.textLight
-              : (isActive ? AppTheme.primaryColor : AppTheme.textPrimary),
-          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[600],
         ),
       ),
-      tileColor: isActive ? AppTheme.primaryColor.withOpacity(0.08) : null,
-      onTap: isDisabled ? null : () => context.go(route),
     );
   }
 }

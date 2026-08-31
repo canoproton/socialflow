@@ -23,11 +23,9 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
   @override
   void initState() {
     super.initState();
-    // ✅ SÓ carrega a lista de projetos para o dropdown
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjetoProvider>().loadProjetos();
     });
-    // ✅ NÃO carrega dados automaticamente
   }
 
   @override
@@ -36,11 +34,11 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
     super.dispose();
   }
 
-  // ✅ Método de pesquisa - chamado apenas quando o usuário clica em Pesquisar
   Future<void> _pesquisar() async {
+    // ✅ CORREÇÃO 2: filtro com comSaldo como bool
     final filtro = AlocacaoPesquisaFiltro(
       entidade: _entidadeController.text.isNotEmpty ? _entidadeController.text : null,
-      comSaldo: _comSaldo ? true : null,
+      comSaldo: _comSaldo,  // ← bool direto
       projetoId: _projetoSelecionado,
       dataInicio: _dataInicio,
       dataFim: _dataFim,
@@ -49,12 +47,13 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // ✅ CORREÇÃO 1: usar as propriedades do filtro
       await context.read<AlocacaoProvider>().pesquisarFontes(
-        filtro.text,  // ← String, não objeto
-        apenasComSaldo: apenasComSaldo,
-        dataInicio: dataInicio,
-        dataFim: dataFim,
-        projetoId: projetoId,
+        filtro.entidade ?? '',  // ← usar filtro.entidade
+        apenasComSaldo: filtro.comSaldo ?? false,
+        dataInicio: filtro.dataInicio,
+        dataFim: filtro.dataFim,
+        projetoId: filtro.projetoId,
       );
       print('✅ [PESQUISA] Resultados: ${context.read<AlocacaoProvider>().resultados.length}');
     } catch (e) {
@@ -97,7 +96,6 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
       ),
       body: Column(
         children: [
-          // ✅ Área de Filtros
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -106,7 +104,6 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
             ),
             child: Column(
               children: [
-                // Entidade
                 TextFormField(
                   controller: _entidadeController,
                   decoration: const InputDecoration(
@@ -120,7 +117,6 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Linha: Com Saldo + Projeto
                 Row(
                   children: [
                     Expanded(
@@ -166,7 +162,6 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Range de Data
                 Row(
                   children: [
                     Expanded(
@@ -260,7 +255,6 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Botões de Ação
                 Row(
                   children: [
                     Expanded(
@@ -302,7 +296,6 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
             ),
           ),
 
-          // ✅ Resultado da Pesquisa
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -330,9 +323,9 @@ class _AlocacaoPesquisaScreenState extends State<AlocacaoPesquisaScreen> {
                         itemCount: provider.resultados.length,
                         itemBuilder: (context, index) {
                           final item = provider.resultados[index];
-                          final fonte = item.fonte;              // ← Usar .fonte, não ['fonte']
-                          final saldo = item.saldo;              // ← Usar .saldo, não ['saldo']
-                          final totalAlocado = item.totalAlocado; // ← Usar .totalAlocado, não ['total_alocado']
+                          final fonte = item.fonte;
+                          final saldo = item.saldo;
+                          final totalAlocado = item.totalAlocado;
                           return Card(
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(

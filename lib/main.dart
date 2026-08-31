@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'router/app_router.dart';
 import 'providers/operacional/contato_provider.dart';
 import 'providers/operacional/empresa_provider.dart';
 import 'providers/projetos/projeto_provider.dart';
